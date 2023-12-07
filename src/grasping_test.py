@@ -4,6 +4,20 @@ from robosuite.utils.input_utils import *
 from robosuite.models.objects import MujocoXMLObject
 
 
+def grasp_imp(env, state):
+    for i in range(50):
+        env.step([0, 0, 0, 0, 0, 0, state])
+        env.render()
+
+
+def grasp(env):
+    grasp_imp(env, 1)
+
+
+def ungrasp(env):
+    grasp_imp(env, -1)
+
+
 class ClothObject(MujocoXMLObject):
     """
     Cloth object
@@ -63,10 +77,7 @@ if __name__ == "__main__":
 
     print(f"eef_pose at grasp = {final_eef_pos}")
 
-    for i in range(100):
-        obs, reward, done, _ = env.step([0, 0, 0, 0, 0, 0, 1])
-        env.render()
-        final_eef_pos = obs['robot0_eef_pos']
+    grasp(env)
 
     cube_height = cube_pos[2]
     while cube_height < 1.1:
@@ -83,6 +94,8 @@ if __name__ == "__main__":
         env.render()
         cube_height = obs['cube_pos'][2]
 
+    ungrasp(env)
+
     for i in range(100):
         obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, -1])
         env.render()
@@ -91,7 +104,5 @@ if __name__ == "__main__":
     for i in range(100):
         obs, reward, done, _ = env.step([0, -0.1, 0, 0, 0, 0, -1])
         env.render()
-        final_eef_pos = obs['robot0_eef_pos']
 
     print(f"Final eef_pose = {final_eef_pos}")
-
