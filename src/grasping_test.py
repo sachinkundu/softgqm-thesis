@@ -68,20 +68,20 @@ if __name__ == "__main__":
         env.render()
         final_eef_pos = obs['robot0_eef_pos']
 
-    for i in range(100):
+    cube_height = cube_pos[2]
+    while cube_height < 1.1:
         obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, 1])
         env.render()
-        final_eef_pos = obs['robot0_eef_pos']
+        cube_height = obs['cube_pos'][2]
 
     for i in range(100):
         obs, reward, done, _ = env.step([0, 0.1, 0, 0, 0, 0, 1])
         env.render()
-        final_eef_pos = obs['robot0_eef_pos']
 
-    for i in range(100):
+    while cube_height >= cube_pos[2]:
         obs, reward, done, _ = env.step([0, 0, -0.1, 0, 0, 0, 1])
         env.render()
-        final_eef_pos = obs['robot0_eef_pos']
+        cube_height = obs['cube_pos'][2]
 
     for i in range(100):
         obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, -1])
