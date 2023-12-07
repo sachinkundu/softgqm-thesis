@@ -68,5 +68,30 @@ if __name__ == "__main__":
         env.render()
         final_eef_pos = obs['robot0_eef_pos']
 
+    for i in range(100):
+        obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, 1])
+        env.render()
+        final_eef_pos = obs['robot0_eef_pos']
+
+    for i in range(100):
+        obs, reward, done, _ = env.step([0, 0.1, 0, 0, 0, 0, 1])
+        env.render()
+        final_eef_pos = obs['robot0_eef_pos']
+
+    for i in range(100):
+        obs, reward, done, _ = env.step([0, 0, -0.1, 0, 0, 0, 1])
+        env.render()
+        final_eef_pos = obs['robot0_eef_pos']
+
+    for i in range(100):
+        obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, -1])
+        env.render()
+        final_eef_pos = obs['robot0_eef_pos']
+
+    for i in range(100):
+        obs, reward, done, _ = env.step([0, -0.1, 0, 0, 0, 0, -1])
+        env.render()
+        final_eef_pos = obs['robot0_eef_pos']
+
     print(f"Final eef_pose = {final_eef_pos}")
 
