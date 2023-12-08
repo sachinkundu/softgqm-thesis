@@ -1,7 +1,6 @@
-import numpy as np
 from robosuite.controllers import load_controller_config
 from robosuite.utils.input_utils import *
-from robosuite.models.objects import MujocoXMLObject
+from envs import UnfoldCloth
 
 
 def grasp_imp(env, state):
@@ -18,21 +17,12 @@ def ungrasp(env):
     grasp_imp(env, -1)
 
 
-class ClothObject(MujocoXMLObject):
-    """
-    Cloth object
-    """
-
-    def __init__(self, path, name):
-        super().__init__(path, name=name, obj_type="collision", duplicate_collision_geoms=False)
-
-
 if __name__ == "__main__":
 
     # Create dict to hold options that will be passed to env creation call
     options = {
         "robots": "Panda",
-        "env_name": "Lift"
+        "env_name": "UnfoldCloth"
     }
 
     # Choose controller
