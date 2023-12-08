@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # Create dict to hold options that will be passed to env creation call
     options = {
         "robots": "Panda",
-        "env_name": "UnfoldCloth"
+        "env_name": UnfoldCloth.__name__.split(".")[-1]
     }
 
     # Choose controller
