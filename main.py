@@ -1,6 +1,8 @@
 from robosuite.controllers import load_controller_config
 from robosuite.utils.input_utils import *
-from envs import UnfoldCloth
+from src.envs import UnfoldCloth
+
+from pathlib import Path
 
 
 def grasp_imp(env, state):
@@ -22,7 +24,8 @@ if __name__ == "__main__":
     # Create dict to hold options that will be passed to env creation call
     options = {
         "robots": "Panda",
-        "env_name": UnfoldCloth.__name__.split(".")[-1]
+        "env_name": UnfoldCloth.__name__.split(".")[-1],
+        "asset_path": str((Path(__file__).parent / "assets").resolve())
     }
 
     # Choose controller

@@ -1,0 +1,50 @@
+<!-- Copyright 2021 DeepMind Technologies Limited
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<mujoco model="cloth">
+    <statistic center=".4 0 .8" extent="1.3"/>
+
+    <option wind="0 0 0" density="10" solver="CG" tolerance="1e-6">
+    </option>
+
+    <extension>
+        <plugin plugin="mujoco.elasticity.shell"/>
+    </extension>
+
+    <worldbody>
+        <camera name="top" pos="0.071 -0.018 2.756" xyaxes="0.019 -1.000 0.000 0.998 0.019 0.054"/>
+        <camera name="fixed" mode="track" pos="-1.787 -0.875 1.327" xyaxes="0.442 -0.897 0.000 0.476 0.235 0.848"/>
+        <geom name="floor" type="plane" size="0 0 .1"/>
+        <light diffuse=".6 .6 .6" specular="0.2 0.2 0.2" pos="0 0 4" dir="0 0 -1"/>
+        <body>
+            <body name="object" pos="0 0 0.75">
+                <flexcomp type="grid" count="9 19 1" spacing=".05 .05 .05" mass="10"
+                          name="flag" radius="0.001">
+                    <edge equality="true" damping="0.001"/>
+                    <plugin plugin="mujoco.elasticity.shell">
+                        <config key="poisson" value="0"/>
+                        <config key="thickness" value="1e-2"/>
+                        <!--Units are in Pa (SI)-->
+                        <config key="young" value="3e6"/>
+                    </plugin>
+                </flexcomp>
+                <site rgba="0 0 0 0" size="0.005" pos="0 0 -0.045" name="bottom_site"/>
+                <site rgba="0 0 0 0" size="0.005" pos="0 0 0.03" name="top_site"/>
+                <site rgba="0 0 0 0" size="0.005" pos="0.03 0.03 0" name="horizontal_radius_site"/>
+            </body>
+        </body>
+    </worldbody>
+</mujoco>
+

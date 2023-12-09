@@ -11,6 +11,9 @@ from robosuite.utils.observables import Observable, sensor
 from robosuite.utils.placement_samplers import UniformRandomSampler
 from robosuite.utils.transform_utils import convert_quat
 
+from src.ClothObject import ClothObject
+
+from pathlib import Path
 
 class UnfoldCloth(SingleArmEnv):
     """
@@ -164,6 +167,7 @@ class UnfoldCloth(SingleArmEnv):
         camera_segmentations=None,  # {None, instance, class, element}
         renderer="mujoco",
         renderer_config=None,
+        asset_path=None
     ):
         # settings for table-top
         self.table_full_size = table_full_size
@@ -179,6 +183,8 @@ class UnfoldCloth(SingleArmEnv):
 
         # object placement initializer
         self.placement_initializer = placement_initializer
+
+        self.asset_path = asset_path
 
         super().__init__(
             robots=robots,
@@ -207,6 +213,7 @@ class UnfoldCloth(SingleArmEnv):
             renderer_config=renderer_config,
         )
 
+
     def reward(self, action=None):
         return 1.0
 
@@ -234,6 +241,9 @@ class UnfoldCloth(SingleArmEnv):
             material=redwood,
         )
 
+    def _create_cloth(self):
+        self.cloth = ClothObject(str((Path(self.asset_path) / "cloth.xml").resolve()), "cloth")
+
     def _load_model(self):
         """
         Loads an xml model, puts it in self.model
@@ -256,6 +266,7 @@ class UnfoldCloth(SingleArmEnv):
 
         # initialize objects of interest
         self._create_cube()
+        # self._create_cloth()
 
         # Create placement initializer
         if self.placement_initializer is not None:
@@ -264,7 +275,7 @@ class UnfoldCloth(SingleArmEnv):
         else:
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
-                mujoco_objects=self.cube,
+                mujoco_objects=[self.cube, self.cloth],
                 x_range=[-0.03, 0.03],
                 y_range=[-0.03, 0.03],
                 rotation=None,
@@ -278,7 +289,7 @@ class UnfoldCloth(SingleArmEnv):
         self.model = ManipulationTask(
             mujoco_arena=mujoco_arena,
             mujoco_robots=[robot.robot_model for robot in self.robots],
-            mujoco_objects=self.cube,
+            mujoco_objects=[self.cube,self.cloth]
         )
 
     def _setup_references(self):
