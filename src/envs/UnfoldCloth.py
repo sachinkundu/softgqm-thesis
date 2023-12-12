@@ -266,7 +266,7 @@ class UnfoldCloth(SingleArmEnv):
 
         # initialize objects of interest
         self._create_cube()
-        # self._create_cloth()
+        self._create_cloth()
 
         # Create placement initializer
         if self.placement_initializer is not None:
@@ -362,7 +362,8 @@ class UnfoldCloth(SingleArmEnv):
 
             # Loop through all objects and reset their positions
             for obj_pos, obj_quat, obj in object_placements.values():
-                self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
+                if obj.joints:
+                    self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
 
     def visualize(self, vis_settings):
         """
