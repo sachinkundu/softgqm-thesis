@@ -54,11 +54,15 @@ if __name__ == "__main__":
     initial_eef_pos = initial_state['robot0_eef_pos']
 
     distance = np.linalg.norm(cube_pos - initial_eef_pos)
-    final_eef_pos = np.zeros_like(initial_eef_pos)
+    final_eef_pos = initial_eef_pos
     while distance > 0.01:
-        action = [(cube_pos[0] - initial_eef_pos[0]),
-                  (cube_pos[1] - initial_eef_pos[1]),
-                  (cube_pos[2] - initial_eef_pos[2]),
+        action_x = (cube_pos - final_eef_pos)[0]
+        action_y = (cube_pos - final_eef_pos)[1]
+        action_z = (cube_pos - final_eef_pos)[2]
+
+        action = [action_x,
+                  action_y,
+                  action_z,
                   0,
                   0,
                   0,
@@ -72,30 +76,30 @@ if __name__ == "__main__":
 
     grasp(env)
 
-    cube_height = cube_pos[2]
-    while cube_height < 1.1:
-        obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, 1])
-        env.render()
-        cube_height = obs['cube_pos'][2]
-
-    for i in range(100):
-        obs, reward, done, _ = env.step([0, 0.1, 0, 0, 0, 0, 1])
-        env.render()
-
-    while cube_height >= cube_pos[2]:
-        obs, reward, done, _ = env.step([0, 0, -0.1, 0, 0, 0, 1])
-        env.render()
-        cube_height = obs['cube_pos'][2]
-
-    ungrasp(env)
-
-    for i in range(100):
-        obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, -1])
-        env.render()
-        final_eef_pos = obs['robot0_eef_pos']
-
-    for i in range(100):
-        obs, reward, done, _ = env.step([0, -0.1, 0, 0, 0, 0, -1])
-        env.render()
+    # cube_height = cube_pos[2]
+    # while cube_height < 1.1:
+    #     obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, 1])
+    #     env.render()
+    #     cube_height = obs['cube_pos'][2]
+    #
+    # for i in range(100):
+    #     obs, reward, done, _ = env.step([0, 0.1, 0, 0, 0, 0, 1])
+    #     env.render()
+    #
+    # while cube_height >= cube_pos[2]:
+    #     obs, reward, done, _ = env.step([0, 0, -0.1, 0, 0, 0, 1])
+    #     env.render()
+    #     cube_height = obs['cube_pos'][2]
+    #
+    # ungrasp(env)
+    #
+    # for i in range(100):
+    #     obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, -1])
+    #     env.render()
+    #     final_eef_pos = obs['robot0_eef_pos']
+    #
+    # for i in range(100):
+    #     obs, reward, done, _ = env.step([0, -0.1, 0, 0, 0, 0, -1])
+    #     env.render()
 
     print(f"Final eef_pose = {final_eef_pos}")
