@@ -38,7 +38,7 @@ class UnfoldCloth(SingleArmEnv):
         render_camera="frontview",
         render_collision_mesh=False,
         render_visual_mesh=True,
-        render_gpu_device_id=-1,
+        render_gpu_device_id=0,
         control_freq=20,
         horizon=1000,
         ignore_done=False,
