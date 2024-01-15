@@ -10,6 +10,11 @@ from mujoco import mju_quat2Mat
 
 import time
 
+np.set_printoptions(precision=3)
+
+N = 50
+Tf = 0.1 * (N - 1)
+
 
 def grasp_imp(env, state):
     for i in range(50):
@@ -25,8 +30,19 @@ def ungrasp(env):
     grasp_imp(env, -1)
 
 
-if __name__ == "__main__":
+def to_deg(ang_r):
+    return (180.0 * ang_r / np.pi)
 
+
+def angles(u, v):
+    return np.arccos(u.dot(v) / (np.linalg.norm(u) * np.linalg.norm(v))) if not np.allclose(u, v) else 0
+
+
+def reached_cube(current_eef_pos, cube_pos):
+    return np.linalg.norm(current_eef_pos - cube_pos) < 0.001
+
+
+def main():
     # Create dict to hold options that will be passed to env creation call
     options = {
         "robots": "Panda",
@@ -38,6 +54,7 @@ if __name__ == "__main__":
     controller_name = "OSC_POSE"
 
     controller_config = load_controller_config(default_controller=controller_name)
+    # controller_config['uncouple_pos_ori'] = True
 
     # Load the desired controller
     options["controller_configs"] = controller_config
@@ -49,7 +66,7 @@ if __name__ == "__main__":
         has_offscreen_renderer=False,
         ignore_done=True,
         use_camera_obs=False,
-        control_freq=20,
+        control_freq=20
     )
     initial_state = env.reset()
     env.viewer.set_camera(camera_id=0)
@@ -57,39 +74,61 @@ if __name__ == "__main__":
     cube_pos = initial_state['cube_pos']
     cube_rot = np.zeros(shape=(9, 1))
     mju_quat2Mat(res=cube_rot, quat=initial_state['cube_quat'])
-
     cube_SE3 = mr.RpToTrans(cube_rot.reshape((3, 3)), cube_pos)
 
     initial_eef_pos = initial_state['robot0_eef_pos']
     initial_eef_rot = np.zeros(shape=(9, 1))
     mju_quat2Mat(res=initial_eef_rot, quat=initial_state['robot0_eef_quat'])
-
     eef_SE3 = mr.RpToTrans(initial_eef_rot.reshape((3, 3)), initial_eef_pos)
 
-    trajectory = mr.CartesianTrajectory(eef_SE3, cube_SE3, 10, 800, 5)
+    print(f"cube_pos: {cube_pos}")
+
+    trajectory = mr.CartesianTrajectory(eef_SE3, cube_SE3, Tf, N, 5)
 
     current_eef_pos = initial_eef_pos
-    start_time = time.time()
-    for i, frame in enumerate(trajectory[300:]):
-        position_action = 100 * (frame[:-1, 3] - current_eef_pos)
-        action = [position_action[0],
-                  position_action[1],
-                  position_action[2],
-                  0,
-                  0,
-                  0,
-                  -1]
-        expected_eef_pos = frame[:-1, 3]
-        obs, reward, done, _ = env.step(action)
-        env.render()
+
+    step = 0
+    while not reached_cube(current_eef_pos, cube_pos):
+        if step < N-1:
+            expected_eef_position = trajectory[step][:-1, 3]
+
+            print(f"step: {step} -- current: {current_eef_pos} -- expected: {expected_eef_position}")
+
+            if np.allclose(expected_eef_position, current_eef_pos, rtol=0.01, atol=0.01):
+                step += 1
+
+            frame = trajectory[step]
+            position_action = 10 * (frame[:-1, 3] - current_eef_pos)
+            action = [position_action[0],
+                      position_action[1],
+                      position_action[2],
+                      0,
+                      0,
+                      0,
+                      -1]
+            obs, reward, done, _ = env.step(action)
+            env.render()
+            current_eef_pos = obs['robot0_eef_pos']
+        else:
+            break
+
+    # for i, frame in enumerate(trajectory):
+    #     position_action = frame[:-1, 3] - current_eef_pos
+    #
+    #     action = [position_action[0],
+    #               position_action[1],
+    #               position_action[2],
+    #               0,
+    #               0,
+    #               0,
+    #               -1]
+    #     expected_eef_pos = frame[:-1, 3]
+    #     obs, reward, done, _ = env.step(action)
+    #     env.render()
+
         current_eef_pos = obs['robot0_eef_pos']
 
-    end_time = time.time()
-    print(f"cube_pos             = {initial_state['cube_pos']}")
-    print(f"Final   eef_pose     = {current_eef_pos}")
-    print(f"Last frame pos value = {trajectory[-1][:-1, 3]}")
-    print(f"It took {end_time - start_time}s to execute")
-    print(f"dist {np.linalg.norm(cube_pos - current_eef_pos)}")
+        last_frame = frame
 
     grasp(env)
 
@@ -118,3 +157,7 @@ if __name__ == "__main__":
     for i in range(100):
         obs, reward, done, _ = env.step([0, -0.1, 0, 0, 0, 0, -1])
         env.render()
+
+
+if __name__ == "__main__":
+    main()
