@@ -2,6 +2,7 @@ from robosuite.models.objects import MujocoXMLObject
 
 from pathlib import Path
 
+
 class ClothObject(MujocoXMLObject):
     """
     Cloth object

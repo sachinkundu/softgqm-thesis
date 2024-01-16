@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 from robosuite.controllers import load_controller_config
 from robosuite.utils.input_utils import *
@@ -87,18 +89,12 @@ def main():
 
     current_eef_pos = initial_eef_pos
 
-    step = 0
-    while not reached_cube(current_eef_pos, cube_pos):
-        if step < N-1:
-            expected_eef_position = trajectory[step][:-1, 3]
-
-            print(f"step: {step} -- current: {current_eef_pos} -- expected: {expected_eef_position}")
-
-            if np.allclose(expected_eef_position, current_eef_pos, rtol=0.01, atol=0.01):
-                step += 1
-
-            frame = trajectory[step]
-            position_action = 10 * (frame[:-1, 3] - current_eef_pos)
+    for step_no, frame in enumerate(trajectory):
+        print(f"Step_no: {step_no}")
+        expected_eef_position = frame[:-1, 3]
+        while not np.allclose(expected_eef_position, current_eef_pos, rtol=0.001, atol=0.001):
+            print(f"step: {step_no} -- current: {current_eef_pos} -- expected: {expected_eef_position}")
+            position_action = 30 * (expected_eef_position - current_eef_pos)
             action = [position_action[0],
                       position_action[1],
                       position_action[2],
@@ -109,54 +105,36 @@ def main():
             obs, reward, done, _ = env.step(action)
             env.render()
             current_eef_pos = obs['robot0_eef_pos']
-        else:
-            break
 
-    # for i, frame in enumerate(trajectory):
-    #     position_action = frame[:-1, 3] - current_eef_pos
+    print(f"final position error = {current_eef_pos - cube_pos} norm = {np.linalg.norm(current_eef_pos - cube_pos)}")
+
+    # grasp(env)
     #
-    #     action = [position_action[0],
-    #               position_action[1],
-    #               position_action[2],
-    #               0,
-    #               0,
-    #               0,
-    #               -1]
-    #     expected_eef_pos = frame[:-1, 3]
-    #     obs, reward, done, _ = env.step(action)
+    # cube_height = cube_pos[2]
+    # while cube_height < 1.1:
+    #     obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, 1])
     #     env.render()
-
-        current_eef_pos = obs['robot0_eef_pos']
-
-        last_frame = frame
-
-    grasp(env)
-
-    cube_height = cube_pos[2]
-    while cube_height < 1.1:
-        obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, 1])
-        env.render()
-        cube_height = obs['cube_pos'][2]
-
-    for i in range(100):
-        obs, reward, done, _ = env.step([0, 0.1, 0, 0, 0, 0, 1])
-        env.render()
-
-    while cube_height >= cube_pos[2]:
-        obs, reward, done, _ = env.step([0, 0, -0.1, 0, 0, 0, 1])
-        env.render()
-        cube_height = obs['cube_pos'][2]
-
-    ungrasp(env)
-
-    for i in range(100):
-        obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, -1])
-        env.render()
-        final_eef_pos = obs['robot0_eef_pos']
-
-    for i in range(100):
-        obs, reward, done, _ = env.step([0, -0.1, 0, 0, 0, 0, -1])
-        env.render()
+    #     cube_height = obs['cube_pos'][2]
+    #
+    # for i in range(100):
+    #     obs, reward, done, _ = env.step([0, 0.1, 0, 0, 0, 0, 1])
+    #     env.render()
+    #
+    # while cube_height >= cube_pos[2]:
+    #     obs, reward, done, _ = env.step([0, 0, -0.1, 0, 0, 0, 1])
+    #     env.render()
+    #     cube_height = obs['cube_pos'][2]
+    #
+    # ungrasp(env)
+    #
+    # for i in range(100):
+    #     obs, reward, done, _ = env.step([0, 0, 0.1, 0, 0, 0, -1])
+    #     env.render()
+    #     final_eef_pos = obs['robot0_eef_pos']
+    #
+    # for i in range(100):
+    #     obs, reward, done, _ = env.step([0, -0.1, 0, 0, 0, 0, -1])
+    #     env.render()
 
 
 if __name__ == "__main__":
