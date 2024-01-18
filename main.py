@@ -1,18 +1,10 @@
-import sys
-
 import numpy as np
-from robosuite.controllers import load_controller_config
-from robosuite.utils.input_utils import *
-from src.envs import UnfoldCloth
-
-from pathlib import Path
-
-import modern_robotics as mr
-from mujoco import mju_quat2Mat
 import cv2
-
-import time
-
+from pathlib import Path
+import modern_robotics as mr
+from src.envs import UnfoldCloth
+from robosuite.utils.input_utils import *
+from robosuite.controllers import load_controller_config
 from dm_robotics.transformations import transformations as tr
 
 np.set_printoptions(precision=3)
@@ -36,7 +28,7 @@ def ungrasp(env):
 
 
 def to_deg(ang_r):
-    return (180.0 * ang_r / np.pi)
+    return 180.0 * ang_r / np.pi
 
 
 def angles(u, v):
@@ -70,78 +62,51 @@ def main():
         has_renderer=True,
         has_offscreen_renderer=True,
         ignore_done=True,
-        use_camera_obs=True,
+        use_camera_obs=False,
         control_freq=10
     )
-    initial_state = env.reset()
-    env.viewer.set_camera(camera_id=0)
 
-    cube_pos = initial_state['cube_pos']
-    cube_rot = np.zeros(shape=(9, 1))
-    mju_quat2Mat(res=cube_rot, quat=initial_state['cube_quat'])
-    cube_SE3 = mr.RpToTrans(cube_rot.reshape((3, 3)), cube_pos)
+    for _ in range(10):
 
-    initial_eef_pos = initial_state['robot0_eef_pos']
-    initial_eef_rot = np.zeros(shape=(9, 1))
-    mju_quat2Mat(res=initial_eef_rot, quat=initial_state['robot0_eef_quat'])
-    eef_SE3 = mr.RpToTrans(initial_eef_rot.reshape((3, 3)), initial_eef_pos)
+        initial_state = env.reset()
+        env.viewer.set_camera(camera_id=0)
 
-    cube_in_eef_SE3 = np.matmul(mr.TransInv(eef_SE3), cube_SE3)
+        cube_SE3 = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
+        eef_SE3 = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
+        cube_in_eef_SE3 = np.matmul(mr.TransInv(eef_SE3), cube_SE3)
 
-    cube_in_eef_SE3_ax, cube_in_eef_SE3_angle = (tr.quat_axis(tr.hmat_to_pos_quat(cube_in_eef_SE3)[1]),
-                                                 tr.quat_angle(tr.hmat_to_pos_quat(cube_in_eef_SE3)[1]))
-    print(f"cube_in_eef_SE3_ax: {cube_in_eef_SE3_ax}, cube_in_eef_SE3_angle: {cube_in_eef_SE3_angle}")
+        trajectory_space_frame = mr.CartesianTrajectory(eef_SE3, cube_SE3, Tf, N, 5)
+        trajectory_eef_frame = mr.CartesianTrajectory(eef_SE3, cube_in_eef_SE3, Tf, N, 5)
 
-    cube_ax, cube_ang = tr.quat_axis(initial_state['cube_quat']), tr.quat_angle(initial_state['cube_quat'])
-    eef_ax, eef_ang = tr.quat_axis(initial_state['robot0_eef_quat']), tr.quat_angle(initial_state['robot0_eef_quat'])
+        for frame1_s, frame2_s, frame1_e, frame2_e in zip(trajectory_space_frame, trajectory_space_frame[1:],
+                                                          trajectory_eef_frame, trajectory_eef_frame[1:]):
+            frame1_pos = frame1_s[:-1, -1]
+            frame2_pos = frame2_s[:-1, -1]
 
-    print(f"cube_ax: {cube_ax}, cube_ang: {cube_ang} -- eef_ax: {eef_ax}, eef_ang: {eef_ang}")
+            pos_diff = 42 * (frame2_pos - frame1_pos)
 
-    trajectory1 = mr.CartesianTrajectory(eef_SE3, cube_SE3, Tf, N, 5)
-    trajectory2 = mr.CartesianTrajectory(eef_SE3, cube_in_eef_SE3, Tf, N, 5)
+            frame1_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame1_e)[1])
+            frame2_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame2_e)[1])
 
-    # for frame1, frame2 in zip(trajectory1, trajectory2):
-    #     print(f"frame1_pos: {frame1[:-1, -1]} frame2_pos: {frame2[:-1, -1]}")
+            # print(f"frame1_ax_ang: {frame1_ax_ang} frame2_ax_ang: {frame2_ax_ang}")
 
-    pixels = None
+            ang_diff = 3.82 * (frame2_e_ax_ang - frame1_e_ax_ang)
 
-    for frame1_s, frame2_s, frame1_e, frame2_e in zip(trajectory1, trajectory1[1:], trajectory2, trajectory2[1:]):
-        frame1_pos = frame1_s[:-1, -1]
-        frame2_pos = frame2_s[:-1, -1]
+            action = np.array([pos_diff[0],
+                               pos_diff[1],
+                               pos_diff[2],
+                               ang_diff[0],
+                               ang_diff[1],
+                               ang_diff[2],
+                               -1])
+            # action = np.where(action > 0.001, action, 0)
+            obs, reward, done, _ = env.step(action.tolist())
+            env.render()
 
-        if np.allclose(frame1_s, frame2_s):
-            print("True")
+            print(f"eef_axis: {tr.quat_axis(obs['robot0_eef_quat'])} : eef_angle: {tr.quat_angle(obs['robot0_eef_quat'])}")
+            print(f"cube_pos: {obs['cube_pos']} eef_pos: {obs['robot0_eef_pos']}")
 
-        # print(f"frame1_pos: {frame1_pos} frame2_pos: {frame2_pos}")
-
-        pos_diff = 43.5 * (frame2_pos - frame1_pos)
-
-        frame1_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame1_e)[1])
-        frame2_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame2_e)[1])
-
-        # print(f"frame1_ax_ang: {frame1_ax_ang} frame2_ax_ang: {frame2_ax_ang}")
-
-        ang_diff = 3.82 * (frame2_e_ax_ang - frame1_e_ax_ang)
-
-        action = np.array([pos_diff[0],
-                           pos_diff[1],
-                           pos_diff[2],
-                           ang_diff[0],
-                           ang_diff[1],
-                           ang_diff[2],
-                           -1])
-        # action = np.where(action > 0.001, action, 0)
-        obs, reward, done, _ = env.step(action.tolist())
-        pixels = obs['agentview_image']
-        env.render()
-
-        print(f"eef_axis: {tr.quat_axis(obs['robot0_eef_quat'])} : eef_angle: {tr.quat_angle(obs['robot0_eef_quat'])}")
-        print(f"cube_pos: {cube_pos} eef_pos: {obs['robot0_eef_pos']}")
-
-    cv2.imshow("image", pixels)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
+        cv2.waitKey(1000)
     # current_eef_pos = initial_eef_pos
     #
     # for step_no, frame in enumerate(trajectory):
