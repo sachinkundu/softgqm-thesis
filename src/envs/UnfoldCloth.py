@@ -9,48 +9,49 @@ from robosuite.models.tasks import ManipulationTask
 from robosuite.utils.mjcf_utils import CustomMaterial
 from robosuite.utils.observables import Observable, sensor
 from robosuite.utils.placement_samplers import UniformRandomSampler
-from robosuite.utils.transform_utils import convert_quat
 
 from src.ClothObject import ClothObject
 
 from pathlib import Path
 
+
 class UnfoldCloth(SingleArmEnv):
     """
     Copied and modified from Lift environment, so check that for all the documentation of parameters.
     """
+
     def __init__(
-        self,
-        robots,
-        env_configuration="default",
-        controller_configs=None,
-        gripper_types="default",
-        initialization_noise="default",
-        table_full_size=(0.8, 0.8, 0.05),
-        table_friction=(1.0, 5e-3, 1e-4),
-        use_camera_obs=True,
-        use_object_obs=True,
-        reward_scale=1.0,
-        reward_shaping=False,
-        placement_initializer=None,
-        has_renderer=False,
-        has_offscreen_renderer=True,
-        render_camera="frontview",
-        render_collision_mesh=False,
-        render_visual_mesh=True,
-        render_gpu_device_id=0,
-        control_freq=20,
-        horizon=1000,
-        ignore_done=False,
-        hard_reset=True,
-        camera_names="agentview",
-        camera_heights=256,
-        camera_widths=256,
-        camera_depths=False,
-        camera_segmentations=None,  # {None, instance, class, element}
-        renderer="mujoco",
-        renderer_config=None,
-        asset_path=None
+            self,
+            robots,
+            env_configuration="default",
+            controller_configs=None,
+            gripper_types="default",
+            initialization_noise="default",
+            table_full_size=(0.8, 0.8, 0.05),
+            table_friction=(1.0, 5e-3, 1e-4),
+            use_camera_obs=True,
+            use_object_obs=True,
+            reward_scale=1.0,
+            reward_shaping=False,
+            placement_initializer=None,
+            has_renderer=False,
+            has_offscreen_renderer=True,
+            render_camera="frontview",
+            render_collision_mesh=False,
+            render_visual_mesh=True,
+            render_gpu_device_id=0,
+            control_freq=10,
+            horizon=1000,
+            ignore_done=False,
+            hard_reset=True,
+            camera_names="agentview",
+            camera_heights=256,
+            camera_widths=256,
+            camera_depths=False,
+            camera_segmentations=None,  # {None, instance, class, element}
+            renderer="mujoco",
+            renderer_config=None,
+            asset_path=None
     ):
         # settings for table-top
         self.table_full_size = table_full_size
@@ -95,7 +96,6 @@ class UnfoldCloth(SingleArmEnv):
             renderer=renderer,
             renderer_config=renderer_config,
         )
-
 
     def reward(self, action=None):
         return 1.0
@@ -161,8 +161,8 @@ class UnfoldCloth(SingleArmEnv):
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
                 mujoco_objects=[self.cube],
-                x_range=[-0.1, 0.1],
-                y_range=[-0.1, 0.1],
+                x_range=[-0.2, 0.2],
+                y_range=[-0.2, 0.2],
                 rotation=None,
                 ensure_object_boundary_in_range=False,
                 ensure_valid_placement=True,
@@ -210,7 +210,7 @@ class UnfoldCloth(SingleArmEnv):
 
             @sensor(modality=modality)
             def cube_quat(obs_cache):
-                return convert_quat(np.array(self.sim.data.body_xquat[self.cube_body_id]), to="xyzw")
+                return np.array(self.sim.data.body_xquat[self.cube_body_id])
 
             @sensor(modality=modality)
             def gripper_to_cube_pos(obs_cache):
