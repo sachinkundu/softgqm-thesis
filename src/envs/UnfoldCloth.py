@@ -1,18 +1,17 @@
-from collections import OrderedDict
 
 import numpy as np
+from pathlib import Path
+from collections import OrderedDict
 
-from robosuite.environments.manipulation.single_arm_env import SingleArmEnv
 from robosuite.models.arenas import TableArena
 from robosuite.models.objects import BoxObject
 from robosuite.models.tasks import ManipulationTask
 from robosuite.utils.mjcf_utils import CustomMaterial
 from robosuite.utils.observables import Observable, sensor
 from robosuite.utils.placement_samplers import UniformRandomSampler
+from robosuite.environments.manipulation.single_arm_env import SingleArmEnv
 
 from src.ClothObject import ClothObject
-
-from pathlib import Path
 
 
 class UnfoldCloth(SingleArmEnv):
@@ -260,6 +259,8 @@ class UnfoldCloth(SingleArmEnv):
                 options specified.
         """
         # Run superclass method first
+        vis_settings["grippers"]= True
+
         super().visualize(vis_settings=vis_settings)
 
         # Color the gripper visualization site according to its distance to the cube
