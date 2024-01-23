@@ -12,6 +12,7 @@ np.set_printoptions(precision=3)
 N = 50
 Tf = 0.1 * (N - 1)
 
+no_of_simulations = 1
 
 def grasp_imp(env, state):
     for i in range(50):
@@ -66,7 +67,7 @@ def main():
         control_freq=10
     )
 
-    for _ in range(10):
+    for _ in range(no_of_simulations):
 
         initial_state = env.reset()
         env.viewer.set_camera(camera_id=0)

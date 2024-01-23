@@ -259,7 +259,7 @@ class UnfoldCloth(SingleArmEnv):
                 options specified.
         """
         # Run superclass method first
-        vis_settings["grippers"]= True
+        vis_settings["grippers"] = True
 
         super().visualize(vis_settings=vis_settings)
 
