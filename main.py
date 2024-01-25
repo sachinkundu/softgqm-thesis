@@ -82,6 +82,8 @@ def main():
         eef_SE3 = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
         cube_in_eef_SE3 = np.matmul(mr.TransInv(eef_SE3), cube_SE3)
 
+        logging.info(f"cube angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(cube_in_eef_SE3)[1]))}")
+
         trajectory_space_frame = mr.CartesianTrajectory(eef_SE3, cube_SE3, Tf, N, 5)
         trajectory_eef_frame = mr.CartesianTrajectory(eef_SE3, cube_in_eef_SE3, Tf, N, 5)
 
@@ -110,12 +112,12 @@ def main():
             obs, reward, done, _ = env.step(action.tolist())
             env.render()
 
-            logging.debug(f"eef_axis: {tr.quat_axis(obs['robot0_eef_quat'])} : eef_angle: {tr.quat_angle(obs['robot0_eef_quat'])}")
-            logging.debug(f"cube_pos: {obs['cube_pos']} eef_pos: {obs['robot0_eef_pos']}")
+            logging.info(f"eef_axis: {tr.quat_axis(obs['robot0_eef_quat'])} : eef_angle: {np.rad2deg(tr.quat_angle(obs['robot0_eef_quat']))}")
+            # logging.debug(f"cube_pos: {obs['cube_pos']} eef_pos: {obs['robot0_eef_pos']}")
 
             if i == len(trajectory_space_frame) - 2:
                 logging.info(f"pos error: {np.linalg.norm(obs['cube_pos'] - obs['robot0_eef_pos'])}")
-                logging.info(f"ang error: {np.rad2deg(tr.quat_angle(obs['cube_quat']) - tr.quat_angle(obs['robot0_eef_quat']))}")
+                logging.info(f"ang error: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(cube_in_eef_SE3)[1]) - tr.quat_angle(obs['robot0_eef_quat']))}")
 
         cv2.waitKey(1000)
     # current_eef_pos = initial_eef_pos
