@@ -1,4 +1,10 @@
 import numpy as np
+import logging
+
+DEBUG = False
+log_level = logging.DEBUG if DEBUG else logging.INFO
+logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
+
 import cv2
 from pathlib import Path
 import modern_robotics as mr
@@ -84,7 +90,7 @@ def main():
             frame1_pos = frame1_s[:-1, -1]
             frame2_pos = frame2_s[:-1, -1]
 
-            pos_diff = 42 * (frame2_pos - frame1_pos)
+            pos_diff = 22 * (frame2_pos - frame1_pos)
 
             frame1_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame1_e)[1])
             frame2_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame2_e)[1])
@@ -104,8 +110,8 @@ def main():
             obs, reward, done, _ = env.step(action.tolist())
             env.render()
 
-            print(f"eef_axis: {tr.quat_axis(obs['robot0_eef_quat'])} : eef_angle: {tr.quat_angle(obs['robot0_eef_quat'])}")
-            print(f"cube_pos: {obs['cube_pos']} eef_pos: {obs['robot0_eef_pos']}")
+            logging.debug(f"eef_axis: {tr.quat_axis(obs['robot0_eef_quat'])} : eef_angle: {tr.quat_angle(obs['robot0_eef_quat'])}")
+            logging.debug(f"cube_pos: {obs['cube_pos']} eef_pos: {obs['robot0_eef_pos']}")
 
         cv2.waitKey(1000)
     # current_eef_pos = initial_eef_pos
