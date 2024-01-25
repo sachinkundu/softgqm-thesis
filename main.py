@@ -85,8 +85,8 @@ def main():
         trajectory_space_frame = mr.CartesianTrajectory(eef_SE3, cube_SE3, Tf, N, 5)
         trajectory_eef_frame = mr.CartesianTrajectory(eef_SE3, cube_in_eef_SE3, Tf, N, 5)
 
-        for frame1_s, frame2_s, frame1_e, frame2_e in zip(trajectory_space_frame, trajectory_space_frame[1:],
-                                                          trajectory_eef_frame, trajectory_eef_frame[1:]):
+        for i, (frame1_s, frame2_s, frame1_e, frame2_e) in enumerate(zip(trajectory_space_frame, trajectory_space_frame[1:],
+                                                          trajectory_eef_frame, trajectory_eef_frame[1:])):
             frame1_pos = frame1_s[:-1, -1]
             frame2_pos = frame2_s[:-1, -1]
 
@@ -97,7 +97,7 @@ def main():
 
             # print(f"frame1_ax_ang: {frame1_ax_ang} frame2_ax_ang: {frame2_ax_ang}")
 
-            ang_diff = 3.82 * (frame2_e_ax_ang - frame1_e_ax_ang)
+            ang_diff = 2.8 * (frame2_e_ax_ang - frame1_e_ax_ang)
 
             action = np.array([pos_diff[0],
                                pos_diff[1],
@@ -112,6 +112,10 @@ def main():
 
             logging.debug(f"eef_axis: {tr.quat_axis(obs['robot0_eef_quat'])} : eef_angle: {tr.quat_angle(obs['robot0_eef_quat'])}")
             logging.debug(f"cube_pos: {obs['cube_pos']} eef_pos: {obs['robot0_eef_pos']}")
+
+            if i == len(trajectory_space_frame) - 2:
+                logging.info(f"pos error: {np.linalg.norm(obs['cube_pos'] - obs['robot0_eef_pos'])}")
+                logging.info(f"ang error: {np.rad2deg(tr.quat_angle(obs['cube_quat']) - tr.quat_angle(obs['robot0_eef_quat']))}")
 
         cv2.waitKey(1000)
     # current_eef_pos = initial_eef_pos
