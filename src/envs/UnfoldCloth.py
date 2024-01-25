@@ -150,16 +150,18 @@ class UnfoldCloth(SingleArmEnv):
 
         # initialize objects of interest
         self._create_cube()
-        # self._create_cloth()
+        self._create_cloth()
+
+        mujoco_objects = np.array([self.cube, self.cloth])
 
         # Create placement initializer
         if self.placement_initializer is not None:
             self.placement_initializer.reset()
-            self.placement_initializer.add_objects(self.cube)
+            self.placement_initializer.add_objects(mujoco_objects)
         else:
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
-                mujoco_objects=[self.cube],
+                mujoco_objects=mujoco_objects,
                 x_range=[-0.2, 0.2],
                 y_range=[-0.2, 0.2],
                 rotation=None,
@@ -173,7 +175,7 @@ class UnfoldCloth(SingleArmEnv):
         self.model = ManipulationTask(
             mujoco_arena=mujoco_arena,
             mujoco_robots=[robot.robot_model for robot in self.robots],
-            mujoco_objects=[self.cube]
+            mujoco_objects=mujoco_objects
         )
 
     def _setup_references(self):
