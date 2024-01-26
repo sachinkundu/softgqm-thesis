@@ -1,4 +1,3 @@
-
 import numpy as np
 from pathlib import Path
 from collections import OrderedDict
@@ -28,7 +27,7 @@ class UnfoldCloth(SingleArmEnv):
             initialization_noise="default",
             table_full_size=(0.8, 0.8, 0.05),
             table_friction=(1.0, 5e-3, 1e-4),
-            use_camera_obs=True,
+            use_camera_obs=False,
             use_object_obs=True,
             reward_scale=1.0,
             reward_shaping=False,
@@ -188,6 +187,7 @@ class UnfoldCloth(SingleArmEnv):
 
         # Additional object references from this env
         self.cube_body_id = self.sim.model.body_name2id(self.cube.root_body)
+        self.cloth_main_id = self.sim.model.body_name2id(self.cloth.root_body)
 
     def _setup_observables(self):
         """
@@ -221,7 +221,15 @@ class UnfoldCloth(SingleArmEnv):
                     else np.zeros(3)
                 )
 
-            sensors = [cube_pos, cube_quat, gripper_to_cube_pos]
+            @sensor(modality=modality)
+            def cloth_pos(obs_cache):
+                return np.array(self.sim.data.body_xpos[self.cloth_main_id])
+
+            @sensor(modality=modality)
+            def cloth_quat(obs_cache):
+                return np.array(self.sim.data.body_xquat[self.cloth_main_id])
+
+            sensors = [cube_pos, cube_quat, gripper_to_cube_pos, cloth_pos, cloth_quat]
             names = [s.__name__ for s in sensors]
 
             # Create observables
