@@ -49,7 +49,8 @@ class UnfoldCloth(SingleArmEnv):
             camera_segmentations=None,  # {None, instance, class, element}
             renderer="mujoco",
             renderer_config=None,
-            asset_path=None
+            asset_path=None,
+            include_cloth=False
     ):
         # settings for table-top
         self.table_full_size = table_full_size
@@ -67,6 +68,8 @@ class UnfoldCloth(SingleArmEnv):
         self.placement_initializer = placement_initializer
 
         self.asset_path = asset_path
+
+        self.include_cloth = include_cloth
 
         super().__init__(
             robots=robots,
@@ -149,9 +152,11 @@ class UnfoldCloth(SingleArmEnv):
 
         # initialize objects of interest
         self._create_cube()
-        self._create_cloth()
+        mujoco_objects = np.array([self.cube])
 
-        mujoco_objects = np.array([self.cube, self.cloth])
+        if self.include_cloth:
+            self._create_cloth()
+            mujoco_objects = np.array([self.cube, self.cloth])
 
         # Create placement initializer
         if self.placement_initializer is not None:
@@ -187,7 +192,8 @@ class UnfoldCloth(SingleArmEnv):
 
         # Additional object references from this env
         self.cube_body_id = self.sim.model.body_name2id(self.cube.root_body)
-        self.cloth_main_id = self.sim.model.body_name2id(self.cloth.root_body)
+        if self.include_cloth:
+            self.cloth_main_id = self.sim.model.body_name2id(self.cloth.root_body)
 
     def _setup_observables(self):
         """
@@ -221,15 +227,19 @@ class UnfoldCloth(SingleArmEnv):
                     else np.zeros(3)
                 )
 
-            @sensor(modality=modality)
-            def cloth_pos(obs_cache):
-                return np.array(self.sim.data.body_xpos[self.cloth_main_id])
+            sensors = [cube_pos, cube_quat, gripper_to_cube_pos]
 
-            @sensor(modality=modality)
-            def cloth_quat(obs_cache):
-                return np.array(self.sim.data.body_xquat[self.cloth_main_id])
+            if self.include_cloth:
+                @sensor(modality=modality)
+                def cloth_pos(obs_cache):
+                    return np.array(self.sim.data.body_xpos[self.cloth_main_id])
 
-            sensors = [cube_pos, cube_quat, gripper_to_cube_pos, cloth_pos, cloth_quat]
+                @sensor(modality=modality)
+                def cloth_quat(obs_cache):
+                    return np.array(self.sim.data.body_xquat[self.cloth_main_id])
+
+                sensors.extend([cloth_pos, cloth_quat])
+
             names = [s.__name__ for s in sensors]
 
             # Create observables
