@@ -1,6 +1,7 @@
 import numpy as np
-import logging
 import cv2
+import click
+import logging
 from pathlib import Path
 import modern_robotics as mr
 from src.envs import UnfoldCloth
@@ -8,18 +9,10 @@ from robosuite.utils.input_utils import *
 from robosuite.controllers import load_controller_config
 from dm_robotics.transformations import transformations as tr
 
-DEBUG = True
-log_level = logging.DEBUG if DEBUG else logging.INFO
-logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
-
 np.set_printoptions(precision=3)
 
 N = 50
 Tf = 0.1 * (N - 1)
-
-no_of_simulations = 10
-
-include_cloth = False
 
 
 def grasp_imp(env, state):
@@ -48,7 +41,16 @@ def reached_cube(current_eef_pos, cube_pos):
     return np.linalg.norm(current_eef_pos - cube_pos) < 0.001
 
 
-def main():
+@click.command()
+@click.option('--cloth', is_flag=True, help="include cloth in sim")
+@click.option('--n', default=1, show_default=True, help="number of simulation runs")
+@click.option('--debug', is_flag=True, default=False, show_default=True, help="debug logging")
+def main(cloth, n, debug):
+
+    if debug:
+        log_level = logging.DEBUG if debug else logging.INFO
+        logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
+
     # Create dict to hold options that will be passed to env creation call
     options = {
         "robots": "Panda",
@@ -73,17 +75,17 @@ def main():
         ignore_done=True,
         use_camera_obs=False,
         control_freq=10,
-        include_cloth=include_cloth
+        include_cloth=cloth
     )
 
-    for _ in range(no_of_simulations):
+    for _ in range(n):
 
         initial_state = env.reset()
         env.viewer.set_camera(camera_id=0)
 
         eef_SE3 = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
-        if include_cloth:
+        if cloth:
             cloth_SE3 = tr.pos_quat_to_hmat(initial_state['cloth_pos'], initial_state['cloth_quat'])
             cloth_in_eef_SE3 = np.matmul(mr.TransInv(eef_SE3), cloth_SE3)
             logging.info(f"cloth angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(cloth_in_eef_SE3)[1]))}")
@@ -152,7 +154,7 @@ def main():
                 logging.debug(f"cube_pos: {obs['cube_pos']} eef_pos: {obs['robot0_eef_pos']}")
                 last_obs = obs
 
-        if include_cloth:
+        if cloth:
             logging.info(f"cloth pos error: {np.linalg.norm(last_obs['cloth_pos'] - last_obs['robot0_eef_pos'])}")
             logging.info(
                 f"cloth ang error: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(cloth_in_eef_SE3)[1]) - tr.quat_angle(last_obs['cloth_quat']))}")
