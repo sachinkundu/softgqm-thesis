@@ -29,18 +29,6 @@ def ungrasp(env):
     grasp_imp(env, -1)
 
 
-def to_deg(ang_r):
-    return 180.0 * ang_r / np.pi
-
-
-def angles(u, v):
-    return np.arccos(u.dot(v) / (np.linalg.norm(u) * np.linalg.norm(v))) if not np.allclose(u, v) else 0
-
-
-def reached_cube(current_eef_pos, cube_pos):
-    return np.linalg.norm(current_eef_pos - cube_pos) < 0.001
-
-
 @click.command()
 @click.option('--cloth', is_flag=True, help="include cloth in sim")
 @click.option('--n', default=1, show_default=True, help="number of simulation runs")
