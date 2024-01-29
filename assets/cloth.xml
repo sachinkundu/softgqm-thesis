@@ -5,6 +5,7 @@
         <plugin plugin="mujoco.elasticity.shell"/>
     </extension>
 
+    <size nkey="10"/>
     <worldbody>
         <geom name="floor" type="plane" size="0 0 .1"/>
         <light diffuse=".6 .6 .6" specular="0.2 0.2 0.2" pos="0 0 4" dir="0 0 -1"/>

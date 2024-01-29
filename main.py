@@ -8,7 +8,7 @@ from robosuite.utils.input_utils import *
 from robosuite.controllers import load_controller_config
 from dm_robotics.transformations import transformations as tr
 
-DEBUG = False
+DEBUG = True
 log_level = logging.DEBUG if DEBUG else logging.INFO
 logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
 
@@ -17,7 +17,7 @@ np.set_printoptions(precision=3)
 N = 50
 Tf = 0.1 * (N - 1)
 
-no_of_simulations = 1
+no_of_simulations = 10
 
 include_cloth = False
 
@@ -105,8 +105,8 @@ def main():
             trajectory_space_frame = mr.CartesianTrajectory(eef_SE3, cube_SE3, Tf, N, 5)
             trajectory_eef_frame = mr.CartesianTrajectory(eef_SE3, cube_in_eef_SE3, Tf, N, 5)
 
-        p_gain = 20
-        ang_gain = 2.8
+        p_gain = 25
+        ang_gain = 3
 
         current_eef_pos = trajectory_space_frame[0][:-1, -1]
         last_obs = initial_state
@@ -114,22 +114,27 @@ def main():
                                                                        trajectory_eef_frame,
                                                                        trajectory_eef_frame[1:])):
 
+            logging.info(f"starting step: {i}")
+
             if np.linalg.norm(current_eef_pos - initial_state['cube_pos']) < 0.01:
                 break
 
             frame2_pos = destination_pose[:-1, -1]
-            logging.info(f"taking step: {i}")
-            while not np.allclose(frame2_pos, current_eef_pos, rtol=0.005, atol=0.005):
+            repeat = 0
+            while not np.allclose(frame2_pos, current_eef_pos, rtol=0.001, atol=0.001):
                 logging.info(f"taking step: {i}")
                 pos_diff = p_gain * (frame2_pos - current_eef_pos)
 
                 frame1_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame1_e)[1])
                 frame2_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame2_e)[1])
 
-                ang_diff = ang_gain * (frame2_e_ax_ang - frame1_e_ax_ang)
-
-                # ang_diff = np.zeros(shape=(3, ))
-
+                if repeat == 0:
+                    ang_diff = ang_gain * (frame2_e_ax_ang - frame1_e_ax_ang)
+                else:
+                    if repeat > 50:
+                        break
+                    ang_diff = np.zeros(shape=(3, ))
+                repeat += 1
                 action = np.array([pos_diff[0],
                                    pos_diff[1],
                                    pos_diff[2],
@@ -137,6 +142,7 @@ def main():
                                    ang_diff[1],
                                    ang_diff[2],
                                    -1])
+                logging.debug(f"action: {action}")
                 obs, reward, done, _ = env.step(action.tolist())
                 current_eef_pos = obs['robot0_eef_pos']
                 env.render()
