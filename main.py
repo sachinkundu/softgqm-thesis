@@ -2,7 +2,6 @@ import cv2
 import click
 import logging
 from pathlib import Path
-import modern_robotics as mr
 from src.envs import UnfoldCloth
 from robosuite.utils.input_utils import *
 from robosuite.controllers import load_controller_config
@@ -36,7 +35,7 @@ def main(cloth, n, debug):
     options["controller_configs"] = controller_config
 
     # initialize the task
-    env = suite.make(
+    env: UnfoldCloth = suite.make(
         **options,
         has_renderer=True,
         has_offscreen_renderer=True,
@@ -70,6 +69,16 @@ def main(cloth, n, debug):
             logging.debug(f"cube_pos: {last_obs['cube_pos']} eef_pos: {last_obs['robot0_eef_pos']}")
 
         env.grasp()
+
+        last_obs = env.lift()
+
+        place_hmat = np.matmul(tr.rotation_z_axis(np.array([np.pi/2]), True), pick_object_pose)
+        place_hmat[:-1, -1] = pick_object_pose[:-1, -1] + np.array([0.1, 0.1, 0])
+        env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
+
+        env.ungrasp()
+
+        env.home(eef_pose, place_hmat)
 
         cv2.waitKey(1000)
 

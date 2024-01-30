@@ -19,13 +19,13 @@ class TrajectoryFollower:
         self.logger.info(f"cube angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1]))}")
 
         trajectory_space_frame = mr.CartesianTrajectory(eef_init_hmat, destination_hmat, Tf, N, 5)
-        trajectory_eef_frame = mr.CartesianTrajectory(eef_init_hmat, destination_in_eef, Tf, N, 5)
+        trajectory_eef_frame = mr.CartesianTrajectory(eef_init_hmat, destination_hmat, Tf, N, 5)
 
         return trajectory_space_frame, trajectory_eef_frame, destination_in_eef
 
-    def follow(self, start_state, eef_init_pose):
+    def follow(self, destination_hmat, eef_init_pose, grasp_action):
 
-        pos_trajectory, ori_trajectory, destination_in_eef = self._calculate_trajectory(start_state, eef_init_pose)
+        pos_trajectory, ori_trajectory, destination_in_eef = self._calculate_trajectory(destination_hmat, eef_init_pose)
 
         current_eef_pos = pos_trajectory[0][:-1, -1]
         last_obs = None
@@ -35,7 +35,7 @@ class TrajectoryFollower:
 
             self.logger.info(f"starting step: {i}")
 
-            if np.linalg.norm(current_eef_pos - start_state[:-1, -1]) < 0.001:
+            if np.linalg.norm(current_eef_pos - destination_hmat[:-1, -1]) < 0.001:
                 break
 
             frame2_pos = desired_pose[:-1, -1]
@@ -49,6 +49,7 @@ class TrajectoryFollower:
 
                 if repeat == 0:
                     ang_diff = self.ang_gain * (frame2_e_ax_ang - frame1_e_ax_ang)
+                    # ang_diff = np.zeros(shape=(3,))
                 else:
                     if repeat > 50:
                         break
@@ -60,7 +61,7 @@ class TrajectoryFollower:
                                    ang_diff[0],
                                    ang_diff[1],
                                    ang_diff[2],
-                                   -1])
+                                   grasp_action])
                 self.logger.debug(f"action: {action}")
                 obs, reward, done, _ = self.env.step(action.tolist())
                 self.env.render()
@@ -68,7 +69,7 @@ class TrajectoryFollower:
                 last_obs = obs
 
         destination_angle = tr.quat_angle(tr.hmat_to_pos_quat(destination_in_eef)[1])
-        start_angle = tr.quat_angle(tr.hmat_to_pos_quat(start_state)[1])
+        start_angle = tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1])
         angle_error = np.rad2deg(destination_angle - start_angle)
         self.logger.info(f"Final angle error: {angle_error}")
 

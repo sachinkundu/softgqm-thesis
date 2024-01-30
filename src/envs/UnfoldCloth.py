@@ -76,6 +76,8 @@ class UnfoldCloth(SingleArmEnv):
 
         self.logger = logger
 
+        self.grasp_state = -1 # Not grasping to start with
+
         super().__init__(
             robots=robots,
             env_configuration=env_configuration,
@@ -173,9 +175,9 @@ class UnfoldCloth(SingleArmEnv):
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
                 mujoco_objects=mujoco_objects,
-                x_range=[-0.2, 0.2],
-                y_range=[-0.2, 0.2],
-                rotation=None,
+                x_range=[-0.1, 0.1],
+                y_range=[-0.1, 0.1],
+                rotation=np.pi/4,
                 ensure_object_boundary_in_range=False,
                 ensure_valid_placement=True,
                 reference_pos=self.table_offset,
@@ -295,7 +297,7 @@ class UnfoldCloth(SingleArmEnv):
             self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
     def reach(self, pick_object_pose, eef_pose):
-        last_obs = self.trajectory_follower.follow(pick_object_pose, eef_pose)
+        last_obs = self.trajectory_follower.follow(pick_object_pose, eef_pose, self.grasp_state)
 
         if self.include_cloth:
             self.logger.info(f"cloth pos error: {np.linalg.norm(last_obs['cloth_pos'] - last_obs['robot0_eef_pos'])}")
@@ -304,16 +306,36 @@ class UnfoldCloth(SingleArmEnv):
 
         return last_obs
 
-    def _grasp_imp(self, state):
-        for i in range(10):
-            self.step([0, 0, 0, 0, 0, 0, state])
+    def lift(self):
+        last_obs = None
+        start_height = self.sim.data.body_xpos[self.cube_body_id][2]
+        while self.sim.data.body_xpos[self.cube_body_id][2] < start_height + 0.2:
+            obs, reward, done, _ = self.step([0, 0, 0.1, 0, 0, 0, self.grasp_state])
             self.render()
+            last_obs = obs
+        return last_obs
+
+    def place(self, place_hmat, eef_init_pose):
+        self.trajectory_follower.follow(place_hmat, eef_init_pose, self.grasp_state)
+
+    def home(self, home_hmat, eef_init_pose):
+        self.trajectory_follower.follow(home_hmat, eef_init_pose, self.grasp_state)
 
     def grasp(self):
-        self._grasp_imp(1)
+        self.grasp_state = 1
+        return self._grasp_imp()
 
     def ungrasp(self):
-        self._grasp_imp(-1)
+        self.grasp_state = -1
+        return self._grasp_imp()
+
+    def _grasp_imp(self):
+        last_obs = None
+        for i in range(10):
+            obs, reward, done, _  = self.step([0, 0, 0, 0, 0, 0, self.grasp_state])
+            self.render()
+            last_obs = obs
+        return last_obs
 
     def _check_success(self):
         """
