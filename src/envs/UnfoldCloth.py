@@ -11,6 +11,7 @@ from robosuite.utils.placement_samplers import UniformRandomSampler
 from robosuite.environments.manipulation.single_arm_env import SingleArmEnv
 
 from src.ClothObject import ClothObject
+from dm_robotics.transformations import transformations as tr
 
 
 class UnfoldCloth(SingleArmEnv):
@@ -50,7 +51,8 @@ class UnfoldCloth(SingleArmEnv):
             renderer="mujoco",
             renderer_config=None,
             asset_path=None,
-            include_cloth=False
+            include_cloth=False,
+            logger=None
     ):
         # settings for table-top
         self.table_full_size = table_full_size
@@ -70,6 +72,8 @@ class UnfoldCloth(SingleArmEnv):
         self.asset_path = asset_path
 
         self.include_cloth = include_cloth
+
+        self.logger = logger
 
         super().__init__(
             robots=robots,
@@ -286,6 +290,52 @@ class UnfoldCloth(SingleArmEnv):
         # Color the gripper visualization site according to its distance to the cube
         if vis_settings["grippers"]:
             self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
+
+    def pick_manipulation(self, start_state, pos_trajectory, ori_trajectory):
+        p_gain = 25
+        ang_gain = 3
+
+        current_eef_pos = pos_trajectory[0][:-1, -1]
+        last_obs = None
+        for i, (destination_pose, frame1_e, frame2_e) in enumerate(zip(pos_trajectory,
+                                                                       ori_trajectory,
+                                                                       ori_trajectory[1:])):
+
+            self.logger.info(f"starting step: {i}")
+
+            if np.linalg.norm(current_eef_pos - start_state['cube_pos']) < 0.01:
+                break
+
+            frame2_pos = destination_pose[:-1, -1]
+            repeat = 0
+            while not np.allclose(frame2_pos, current_eef_pos, rtol=0.001, atol=0.001):
+                self.logger.info(f"taking step: {i}")
+                pos_diff = p_gain * (frame2_pos - current_eef_pos)
+
+                frame1_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame1_e)[1])
+                frame2_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame2_e)[1])
+
+                if repeat == 0:
+                    ang_diff = ang_gain * (frame2_e_ax_ang - frame1_e_ax_ang)
+                else:
+                    if repeat > 50:
+                        break
+                    ang_diff = np.zeros(shape=(3,))
+                repeat += 1
+                action = np.array([pos_diff[0],
+                                   pos_diff[1],
+                                   pos_diff[2],
+                                   ang_diff[0],
+                                   ang_diff[1],
+                                   ang_diff[2],
+                                   -1])
+                self.logger.debug(f"action: {action}")
+                obs, reward, done, _ = self.step(action.tolist())
+                self.render()
+                current_eef_pos = obs['robot0_eef_pos']
+                last_obs = obs
+
+        return last_obs
 
     def _check_success(self):
         """

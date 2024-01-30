@@ -29,53 +29,6 @@ def ungrasp(env):
     grasp_imp(env, -1)
 
 
-def pick_manipulation(start_state, pos_trajectory, ori_trajectory, env):
-    p_gain = 25
-    ang_gain = 3
-
-    current_eef_pos = pos_trajectory[0][:-1, -1]
-    last_obs = None
-    for i, (destination_pose, frame1_e, frame2_e) in enumerate(zip(pos_trajectory,
-                                                                   ori_trajectory,
-                                                                   ori_trajectory[1:])):
-
-        logging.info(f"starting step: {i}")
-
-        if np.linalg.norm(current_eef_pos - start_state['cube_pos']) < 0.01:
-            break
-
-        frame2_pos = destination_pose[:-1, -1]
-        repeat = 0
-        while not np.allclose(frame2_pos, current_eef_pos, rtol=0.001, atol=0.001):
-            logging.info(f"taking step: {i}")
-            pos_diff = p_gain * (frame2_pos - current_eef_pos)
-
-            frame1_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame1_e)[1])
-            frame2_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame2_e)[1])
-
-            if repeat == 0:
-                ang_diff = ang_gain * (frame2_e_ax_ang - frame1_e_ax_ang)
-            else:
-                if repeat > 50:
-                    break
-                ang_diff = np.zeros(shape=(3,))
-            repeat += 1
-            action = np.array([pos_diff[0],
-                               pos_diff[1],
-                               pos_diff[2],
-                               ang_diff[0],
-                               ang_diff[1],
-                               ang_diff[2],
-                               -1])
-            logging.debug(f"action: {action}")
-            obs, reward, done, _ = env.step(action.tolist())
-            env.render()
-            current_eef_pos = obs['robot0_eef_pos']
-            last_obs = obs
-
-    return last_obs
-
-
 @click.command()
 @click.option('--cloth', is_flag=True, help="include cloth in sim")
 @click.option('--n', default=1, show_default=True, help="number of simulation runs")
@@ -110,7 +63,8 @@ def main(cloth, n, debug):
         ignore_done=True,
         use_camera_obs=False,
         control_freq=10,
-        include_cloth=cloth
+        include_cloth=cloth,
+        logger=logging.getLogger(__name__)
     )
 
     for _ in range(n):
@@ -142,7 +96,7 @@ def main(cloth, n, debug):
             trajectory_space_frame = mr.CartesianTrajectory(eef_init_pose, cube_init_pose, Tf, N, 5)
             trajectory_eef_frame = mr.CartesianTrajectory(eef_init_pose, cube_in_eef, Tf, N, 5)
 
-        last_obs = pick_manipulation(initial_state, trajectory_space_frame, trajectory_eef_frame, env)
+        last_obs = env.pick_manipulation(initial_state, trajectory_space_frame, trajectory_eef_frame)
 
         logging.debug(
             f"eef_axis: {tr.quat_axis(last_obs['robot0_eef_quat'])} : eef_angle: {np.rad2deg(tr.quat_angle(last_obs['robot0_eef_quat']))}")
