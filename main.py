@@ -60,7 +60,7 @@ def main(cloth, n, debug):
 
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
-        last_obs = env.pick_manipulation(pick_object_pose, eef_pose)
+        last_obs = env.reach(pick_object_pose, eef_pose)
 
         logging.debug(
             f"eef_axis: {tr.quat_axis(last_obs['robot0_eef_quat'])} : eef_angle: {np.rad2deg(tr.quat_angle(last_obs['robot0_eef_quat']))}")

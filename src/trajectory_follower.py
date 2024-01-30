@@ -35,7 +35,7 @@ class TrajectoryFollower:
 
             self.logger.info(f"starting step: {i}")
 
-            if np.linalg.norm(current_eef_pos - start_state[:-1, -1]) < 0.01:
+            if np.linalg.norm(current_eef_pos - start_state[:-1, -1]) < 0.001:
                 break
 
             frame2_pos = desired_pose[:-1, -1]

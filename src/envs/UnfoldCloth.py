@@ -294,7 +294,7 @@ class UnfoldCloth(SingleArmEnv):
         if vis_settings["grippers"]:
             self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
-    def pick_manipulation(self, pick_object_pose, eef_pose):
+    def reach(self, pick_object_pose, eef_pose):
         last_obs = self.trajectory_follower.follow(pick_object_pose, eef_pose)
 
         if self.include_cloth:
