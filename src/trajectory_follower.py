@@ -16,7 +16,7 @@ class TrajectoryFollower:
 
     def _calculate_trajectory(self, destination_hmat, eef_init_hmat):
         destination_in_eef = np.matmul(mr.TransInv(eef_init_hmat), destination_hmat)
-        self.logger.info(f"cube angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1]))}")
+        self.logger.info(f"dest angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1]))}")
 
         trajectory_space_frame = mr.CartesianTrajectory(eef_init_hmat, destination_hmat, Tf, N, 5)
         trajectory_eef_frame = mr.CartesianTrajectory(eef_init_hmat, destination_hmat, Tf, N, 5)
@@ -71,6 +71,10 @@ class TrajectoryFollower:
         destination_angle = tr.quat_angle(tr.hmat_to_pos_quat(destination_in_eef)[1])
         start_angle = tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1])
         angle_error = np.rad2deg(destination_angle - start_angle)
-        self.logger.info(f"Final angle error: {angle_error}")
 
+        destination_pos = destination_hmat[:-1, -1]
+        current_pos = last_obs['robot0_eef_pos']
+        pos_error = destination_pos - current_pos
+        self.logger.info(f"Final angle error: {angle_error}")
+        self.logger.info(f"Final pos   error: {np.linalg.norm(pos_error)}")
         return last_obs

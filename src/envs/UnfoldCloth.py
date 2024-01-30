@@ -298,12 +298,6 @@ class UnfoldCloth(SingleArmEnv):
 
     def reach(self, pick_object_pose, eef_pose):
         last_obs = self.trajectory_follower.follow(pick_object_pose, eef_pose, self.grasp_state)
-
-        if self.include_cloth:
-            self.logger.info(f"cloth pos error: {np.linalg.norm(last_obs['cloth_pos'] - last_obs['robot0_eef_pos'])}")
-        else:
-            self.logger.info(f"cube pos error: {np.linalg.norm(last_obs['cube_pos'] - last_obs['robot0_eef_pos'])}")
-
         return last_obs
 
     def lift(self):

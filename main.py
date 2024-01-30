@@ -61,13 +61,6 @@ def main(cloth, n, debug):
 
         last_obs = env.reach(pick_object_pose, eef_pose)
 
-        logging.debug(
-            f"eef_axis: {tr.quat_axis(last_obs['robot0_eef_quat'])} : eef_angle: {np.rad2deg(tr.quat_angle(last_obs['robot0_eef_quat']))}")
-        if cloth:
-            logging.debug(f"cloth_pos: {last_obs['cloth_pos']} eef_pos: {last_obs['robot0_eef_pos']}")
-        else:
-            logging.debug(f"cube_pos: {last_obs['cube_pos']} eef_pos: {last_obs['robot0_eef_pos']}")
-
         env.grasp()
 
         last_obs = env.lift()
