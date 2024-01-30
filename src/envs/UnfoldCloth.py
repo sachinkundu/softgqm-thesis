@@ -11,6 +11,7 @@ from robosuite.utils.placement_samplers import UniformRandomSampler
 from robosuite.environments.manipulation.single_arm_env import SingleArmEnv
 
 from src.ClothObject import ClothObject
+from src.trajectory_follower import TrajectoryFollower
 from dm_robotics.transformations import transformations as tr
 
 
@@ -102,6 +103,8 @@ class UnfoldCloth(SingleArmEnv):
             renderer_config=renderer_config,
         )
 
+        self.trajectory_follower = TrajectoryFollower(self, self.logger)
+
     def reward(self, action=None):
         return 1.0
 
@@ -132,7 +135,7 @@ class UnfoldCloth(SingleArmEnv):
         )
 
     def _create_cloth(self):
-        self.cloth = ClothObject(str((Path(self.asset_path) / "cloth.xml").resolve()), "cloth")
+        return ClothObject(str((Path(self.asset_path) / "cloth.xml").resolve()), "cloth")
 
     def _load_model(self):
         """
@@ -159,7 +162,7 @@ class UnfoldCloth(SingleArmEnv):
         mujoco_objects = np.array([self.cube])
 
         if self.include_cloth:
-            self._create_cloth()
+            self.cloth = self._create_cloth()
             mujoco_objects = np.array([self.cube, self.cloth])
 
         # Create placement initializer
@@ -196,7 +199,7 @@ class UnfoldCloth(SingleArmEnv):
 
         # Additional object references from this env
         self.cube_body_id = self.sim.model.body_name2id(self.cube.root_body)
-        if self.include_cloth:
+        if self.cloth:
             self.cloth_main_id = self.sim.model.body_name2id(self.cloth.root_body)
 
     def _setup_observables(self):
@@ -291,49 +294,13 @@ class UnfoldCloth(SingleArmEnv):
         if vis_settings["grippers"]:
             self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
-    def pick_manipulation(self, start_state, pos_trajectory, ori_trajectory):
-        p_gain = 25
-        ang_gain = 3
+    def pick_manipulation(self, pick_object_pose, eef_pose):
+        last_obs = self.trajectory_follower.follow(pick_object_pose, eef_pose)
 
-        current_eef_pos = pos_trajectory[0][:-1, -1]
-        last_obs = None
-        for i, (destination_pose, frame1_e, frame2_e) in enumerate(zip(pos_trajectory,
-                                                                       ori_trajectory,
-                                                                       ori_trajectory[1:])):
-
-            self.logger.info(f"starting step: {i}")
-
-            if np.linalg.norm(current_eef_pos - start_state['cube_pos']) < 0.01:
-                break
-
-            frame2_pos = destination_pose[:-1, -1]
-            repeat = 0
-            while not np.allclose(frame2_pos, current_eef_pos, rtol=0.001, atol=0.001):
-                self.logger.info(f"taking step: {i}")
-                pos_diff = p_gain * (frame2_pos - current_eef_pos)
-
-                frame1_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame1_e)[1])
-                frame2_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(frame2_e)[1])
-
-                if repeat == 0:
-                    ang_diff = ang_gain * (frame2_e_ax_ang - frame1_e_ax_ang)
-                else:
-                    if repeat > 50:
-                        break
-                    ang_diff = np.zeros(shape=(3,))
-                repeat += 1
-                action = np.array([pos_diff[0],
-                                   pos_diff[1],
-                                   pos_diff[2],
-                                   ang_diff[0],
-                                   ang_diff[1],
-                                   ang_diff[2],
-                                   -1])
-                self.logger.debug(f"action: {action}")
-                obs, reward, done, _ = self.step(action.tolist())
-                self.render()
-                current_eef_pos = obs['robot0_eef_pos']
-                last_obs = obs
+        if self.include_cloth:
+            self.logger.info(f"cloth pos error: {np.linalg.norm(last_obs['cloth_pos'] - last_obs['robot0_eef_pos'])}")
+        else:
+            self.logger.info(f"cube pos error: {np.linalg.norm(last_obs['cube_pos'] - last_obs['robot0_eef_pos'])}")
 
         return last_obs
 

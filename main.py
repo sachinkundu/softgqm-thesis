@@ -1,4 +1,3 @@
-import numpy as np
 import cv2
 import click
 import logging
@@ -8,11 +7,6 @@ from src.envs import UnfoldCloth
 from robosuite.utils.input_utils import *
 from robosuite.controllers import load_controller_config
 from dm_robotics.transformations import transformations as tr
-
-np.set_printoptions(precision=3)
-
-N = 50
-Tf = 0.1 * (N - 1)
 
 
 def grasp_imp(env, state):
@@ -72,44 +66,22 @@ def main(cloth, n, debug):
         initial_state = env.reset()
         env.viewer.set_camera(camera_id=0)
 
-        eef_init_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
-
         if cloth:
-            cloth_SE3 = tr.pos_quat_to_hmat(initial_state['cloth_pos'], initial_state['cloth_quat'])
-            cloth_in_eef_SE3 = np.matmul(mr.TransInv(eef_init_pose), cloth_SE3)
-            logging.info(f"cloth angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(cloth_in_eef_SE3)[1]))}")
-            trajectory_space_frame = mr.CartesianTrajectory(eef_init_pose, cloth_SE3, Tf, N, 5)
-            trajectory_eef_frame = mr.CartesianTrajectory(eef_init_pose, cloth_in_eef_SE3, Tf, N, 5)
-
-            cube_init_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
-            cube_in_eef = np.matmul(mr.TransInv(eef_init_pose), cube_init_pose)
-            logging.info(f"cube angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(cube_in_eef)[1]))}")
-
-            trajectory_space_frame = mr.CartesianTrajectory(eef_init_pose, cube_init_pose, Tf, N, 5)
-            trajectory_eef_frame = mr.CartesianTrajectory(eef_init_pose, cube_in_eef, Tf, N, 5)
-
+            pick_object_pose = tr.pos_quat_to_hmat(initial_state['cloth_pos'], initial_state['cloth_quat'])
+            pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
         else:
-            cube_init_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
-            cube_in_eef = np.matmul(mr.TransInv(eef_init_pose), cube_init_pose)
-            logging.info(f"cube angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(cube_in_eef)[1]))}")
+            pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
 
-            trajectory_space_frame = mr.CartesianTrajectory(eef_init_pose, cube_init_pose, Tf, N, 5)
-            trajectory_eef_frame = mr.CartesianTrajectory(eef_init_pose, cube_in_eef, Tf, N, 5)
+        eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
-        last_obs = env.pick_manipulation(initial_state, trajectory_space_frame, trajectory_eef_frame)
+        last_obs = env.pick_manipulation(pick_object_pose, eef_pose)
 
         logging.debug(
             f"eef_axis: {tr.quat_axis(last_obs['robot0_eef_quat'])} : eef_angle: {np.rad2deg(tr.quat_angle(last_obs['robot0_eef_quat']))}")
-        logging.debug(f"cube_pos: {last_obs['cube_pos']} eef_pos: {last_obs['robot0_eef_pos']}")
-
         if cloth:
-            logging.info(f"cloth pos error: {np.linalg.norm(last_obs['cloth_pos'] - last_obs['robot0_eef_pos'])}")
-            logging.info(
-                f"cloth ang error: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(cloth_in_eef_SE3)[1]) - tr.quat_angle(last_obs['cloth_quat']))}")
+            logging.debug(f"cloth_pos: {last_obs['cloth_pos']} eef_pos: {last_obs['robot0_eef_pos']}")
         else:
-            logging.info(f"cube pos error: {np.linalg.norm(last_obs['cube_pos'] - last_obs['robot0_eef_pos'])}")
-            logging.info(
-                f"cube ang error: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(cube_in_eef)[1]) - tr.quat_angle(last_obs['robot0_eef_quat']))}")
+            logging.debug(f"cube_pos: {last_obs['cube_pos']} eef_pos: {last_obs['robot0_eef_pos']}")
 
         grasp(env)
         cv2.waitKey(1000)
