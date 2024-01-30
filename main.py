@@ -9,20 +9,6 @@ from robosuite.controllers import load_controller_config
 from dm_robotics.transformations import transformations as tr
 
 
-def grasp_imp(env, state):
-    for i in range(10):
-        env.step([0, 0, 0, 0, 0, 0, state])
-        env.render()
-
-
-def grasp(env):
-    grasp_imp(env, 1)
-
-
-def ungrasp(env):
-    grasp_imp(env, -1)
-
-
 @click.command()
 @click.option('--cloth', is_flag=True, help="include cloth in sim")
 @click.option('--n', default=1, show_default=True, help="number of simulation runs")
@@ -83,7 +69,8 @@ def main(cloth, n, debug):
         else:
             logging.debug(f"cube_pos: {last_obs['cube_pos']} eef_pos: {last_obs['robot0_eef_pos']}")
 
-        grasp(env)
+        env.grasp()
+
         cv2.waitKey(1000)
 
     env.close()

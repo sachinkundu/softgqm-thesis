@@ -199,7 +199,7 @@ class UnfoldCloth(SingleArmEnv):
 
         # Additional object references from this env
         self.cube_body_id = self.sim.model.body_name2id(self.cube.root_body)
-        if self.cloth:
+        if self.include_cloth:
             self.cloth_main_id = self.sim.model.body_name2id(self.cloth.root_body)
 
     def _setup_observables(self):
@@ -303,6 +303,17 @@ class UnfoldCloth(SingleArmEnv):
             self.logger.info(f"cube pos error: {np.linalg.norm(last_obs['cube_pos'] - last_obs['robot0_eef_pos'])}")
 
         return last_obs
+
+    def _grasp_imp(self, state):
+        for i in range(10):
+            self.step([0, 0, 0, 0, 0, 0, state])
+            self.render()
+
+    def grasp(self):
+        self._grasp_imp(1)
+
+    def ungrasp(self):
+        self._grasp_imp(-1)
 
     def _check_success(self):
         """
