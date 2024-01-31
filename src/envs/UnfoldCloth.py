@@ -1,3 +1,5 @@
+import modern_robotics
+import mujoco
 import numpy as np
 from pathlib import Path
 from collections import OrderedDict
@@ -177,7 +179,7 @@ class UnfoldCloth(SingleArmEnv):
                 mujoco_objects=mujoco_objects,
                 x_range=[-0.1, 0.1],
                 y_range=[-0.1, 0.1],
-                rotation=np.pi/4,
+                rotation=np.pi/6,
                 ensure_object_boundary_in_range=False,
                 ensure_valid_placement=True,
                 reference_pos=self.table_offset,
@@ -267,6 +269,8 @@ class UnfoldCloth(SingleArmEnv):
         """
         super()._reset_internal()
 
+        self.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
+
         # Reset all object positions using initializer sampler if we're not directly loading from an xml
         if not self.deterministic_reset:
 
@@ -277,6 +281,7 @@ class UnfoldCloth(SingleArmEnv):
             for obj_pos, obj_quat, obj in object_placements.values():
                 if obj.joints:
                     self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
+
 
     def visualize(self, vis_settings):
         """
@@ -297,22 +302,22 @@ class UnfoldCloth(SingleArmEnv):
             self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
     def reach(self, pick_object_pose, eef_pose):
+        self.logger.debug("reach")
         last_obs = self.trajectory_follower.follow(pick_object_pose, eef_pose, self.grasp_state)
         return last_obs
 
-    def lift(self):
-        last_obs = None
-        start_height = self.sim.data.body_xpos[self.cube_body_id][2]
-        while self.sim.data.body_xpos[self.cube_body_id][2] < start_height + 0.2:
-            obs, reward, done, _ = self.step([0, 0, 0.1, 0, 0, 0, self.grasp_state])
-            self.render()
-            last_obs = obs
+    def lift(self, eef_pose, height=0.2):
+        self.logger.debug("lift")
+        lift_pose = modern_robotics.RpToTrans(eef_pose[:-1, :-1], eef_pose[:-1, -1] + [0, 0, 0.2])
+        last_obs = self.trajectory_follower.follow(lift_pose, eef_pose, self.grasp_state)
         return last_obs
 
     def place(self, place_hmat, eef_init_pose):
+        self.logger.debug("place")
         self.trajectory_follower.follow(place_hmat, eef_init_pose, self.grasp_state)
 
     def home(self, home_hmat, eef_init_pose):
+        self.logger.debug("home")
         self.trajectory_follower.follow(home_hmat, eef_init_pose, self.grasp_state)
 
     def grasp(self):

@@ -2,6 +2,7 @@ import cv2
 import click
 import logging
 from pathlib import Path
+import modern_robotics as mr
 from src.envs import UnfoldCloth
 from robosuite.utils.input_utils import *
 from robosuite.controllers import load_controller_config
@@ -13,7 +14,6 @@ from dm_robotics.transformations import transformations as tr
 @click.option('--n', default=1, show_default=True, help="number of simulation runs")
 @click.option('--debug', is_flag=True, default=False, show_default=True, help="debug logging")
 def main(cloth, n, debug):
-
     if debug:
         log_level = logging.DEBUG if debug else logging.INFO
         logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
@@ -63,10 +63,11 @@ def main(cloth, n, debug):
 
         env.grasp()
 
-        last_obs = env.lift()
+        last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
-        place_hmat = np.matmul(tr.rotation_z_axis(np.array([np.pi/2]), True), pick_object_pose)
-        place_hmat[:-1, -1] = pick_object_pose[:-1, -1] + np.array([0.1, 0.1, 0])
+        place_hmat = mr.RpToTrans(np.matmul(tr.rotation_z_axis(np.array([np.pi / 4]), False),
+                                            pick_object_pose[:-1, :-1]),
+                                  pick_object_pose[:-1, -1] + np.array([0.1, 0.1, 0]))
         env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
         env.ungrasp()
