@@ -1,8 +1,11 @@
 import cv2
 import click
+import mujoco
 import logging
 from pathlib import Path
 import modern_robotics as mr
+import numpy as np
+
 from src.envs import UnfoldCloth
 from robosuite.utils.input_utils import *
 from robosuite.controllers import load_controller_config
@@ -13,10 +16,11 @@ from dm_robotics.transformations import transformations as tr
 @click.option('--cloth', is_flag=True, help="include cloth in sim")
 @click.option('--n', default=1, show_default=True, help="number of simulation runs")
 @click.option('--debug', is_flag=True, default=False, show_default=True, help="debug logging")
-def main(cloth, n, debug):
-    if debug:
-        log_level = logging.DEBUG if debug else logging.INFO
-        logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
+@click.option('--show-sites', is_flag=True, default=False, help="include cloth in sim")
+def main(cloth, n, debug, show_sites):
+
+    log_level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
 
     # Create dict to hold options that will be passed to env creation call
     options = {
@@ -51,6 +55,9 @@ def main(cloth, n, debug):
         initial_state = env.reset()
         env.viewer.set_camera(camera_id=0)
 
+        if show_sites:
+            env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
+
         if cloth:
             pick_object_pose = tr.pos_quat_to_hmat(initial_state['cloth_pos'], initial_state['cloth_quat'])
             pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
@@ -59,15 +66,20 @@ def main(cloth, n, debug):
 
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
-        last_obs = env.reach(pick_object_pose, eef_pose)
+        last_obs, p_e, a_e = env.reach(pick_object_pose, eef_pose)
 
         env.grasp()
 
         last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
-        place_hmat = mr.RpToTrans(np.matmul(tr.rotation_z_axis(np.array([np.pi / 4]), False),
-                                            pick_object_pose[:-1, :-1]),
-                                  pick_object_pose[:-1, -1] + np.array([0.1, 0.1, 0]))
+        theta = 2 * np.pi * np.random.random_sample() - np.pi
+        logging.info(f"random rotation of: {np.rad2deg(theta)}")
+        new_ori = np.matmul(tr.rotation_z_axis(np.array([theta]), False),
+                            pick_object_pose[:-1, :-1])
+        new_ori = np.matmul(tr.rotation_x_axis(np.array([np.pi / 18]), False), new_ori)
+        place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
+                                                                                 0.2 * np.random.random_sample() - 0.1
+                                                                                    , 0]))
         env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
         env.ungrasp()

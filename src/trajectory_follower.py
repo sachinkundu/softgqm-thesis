@@ -36,7 +36,7 @@ class TrajectoryFollower:
 
             desired_position = desired_pose[:-1, -1]
             while not np.allclose(desired_position, current_eef_position, rtol=0.001, atol=0.001):
-                self.logger.info(f"taking step: {i}")
+                self.logger.debug(f"taking step: {i}")
                 pos_diff = self.p_gain * (desired_position - current_eef_position)
 
                 frame1_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1])
@@ -66,4 +66,4 @@ class TrajectoryFollower:
         pos_error = destination_pos - current_pos
         self.logger.info(f"Final angle error: {angle_error}")
         self.logger.info(f"Final pos   error: {np.linalg.norm(pos_error)}")
-        return last_obs
+        return last_obs, pos_error, angle_error

@@ -269,8 +269,6 @@ class UnfoldCloth(SingleArmEnv):
         """
         super()._reset_internal()
 
-        self.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
-
         # Reset all object positions using initializer sampler if we're not directly loading from an xml
         if not self.deterministic_reset:
 
@@ -302,23 +300,21 @@ class UnfoldCloth(SingleArmEnv):
             self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
     def reach(self, pick_object_pose, eef_pose):
-        self.logger.debug("reach")
-        last_obs = self.trajectory_follower.follow(pick_object_pose, eef_pose, self.grasp_state)
-        return last_obs
+        self.logger.info("reach")
+        return self.trajectory_follower.follow(pick_object_pose, eef_pose, self.grasp_state)
 
     def lift(self, eef_pose, height=0.2):
-        self.logger.debug("lift")
-        lift_pose = modern_robotics.RpToTrans(eef_pose[:-1, :-1], eef_pose[:-1, -1] + [0, 0, 0.2])
-        last_obs = self.trajectory_follower.follow(lift_pose, eef_pose, self.grasp_state)
-        return last_obs
+        self.logger.info("lift")
+        lift_pose = modern_robotics.RpToTrans(eef_pose[:-1, :-1], eef_pose[:-1, -1] + [0, 0, height])
+        return self.trajectory_follower.follow(lift_pose, eef_pose, self.grasp_state)
 
     def place(self, place_hmat, eef_init_pose):
-        self.logger.debug("place")
-        self.trajectory_follower.follow(place_hmat, eef_init_pose, self.grasp_state)
+        self.logger.info("place")
+        return self.trajectory_follower.follow(place_hmat, eef_init_pose, self.grasp_state)
 
     def home(self, home_hmat, eef_init_pose):
-        self.logger.debug("home")
-        self.trajectory_follower.follow(home_hmat, eef_init_pose, self.grasp_state)
+        self.logger.info("home")
+        return self.trajectory_follower.follow(home_hmat, eef_init_pose, self.grasp_state)
 
     def grasp(self):
         self.grasp_state = 1
