@@ -72,7 +72,7 @@ def main(cloth, n, debug, show_sites):
 
         last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
-        theta = 2 * np.pi * np.random.random_sample() - np.pi
+        theta = np.pi * np.random.random_sample() - np.pi/2
         logging.info(f"random rotation of: {np.rad2deg(theta)}")
         new_ori = np.matmul(tr.rotation_z_axis(np.array([theta]), False),
                             pick_object_pose[:-1, :-1])
