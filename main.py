@@ -66,7 +66,7 @@ def main(cloth, n, debug, show_sites):
 
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
-        last_obs, p_e, a_e = env.reach(pick_object_pose, eef_pose)
+        last_obs = env.reach(pick_object_pose, eef_pose)
 
         env.grasp()
 

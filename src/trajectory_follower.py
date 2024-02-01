@@ -66,4 +66,4 @@ class TrajectoryFollower:
         pos_error = destination_pos - current_pos
         self.logger.info(f"Final angle error: {angle_error}")
         self.logger.info(f"Final pos   error: {np.linalg.norm(pos_error)}")
-        return last_obs, pos_error, angle_error
+        return last_obs
