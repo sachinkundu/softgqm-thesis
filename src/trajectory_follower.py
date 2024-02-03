@@ -35,6 +35,8 @@ class TrajectoryFollower:
                 break
 
             desired_position = desired_pose[:-1, -1]
+            step_repeat = False
+            last_angle_command = np.zeros(shape=(3, ))
             while not np.allclose(desired_position, current_eef_position, rtol=0.001, atol=0.001):
                 self.logger.debug(f"taking step: {i}")
                 pos_diff = self.p_gain * (desired_position - current_eef_position)
@@ -42,7 +44,12 @@ class TrajectoryFollower:
                 frame1_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1])
                 frame2_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_next_pose)[1])
 
-                ang_diff = self.ang_gain * (frame2_e_ax_ang - frame1_e_ax_ang)
+                if not step_repeat:
+                    ang_diff = self.ang_gain * (frame2_e_ax_ang - frame1_e_ax_ang)
+                    step_repeat = True
+                    last_angle_command = ang_diff
+                else:
+                    ang_diff = last_angle_command
 
                 action = np.array([pos_diff[0],
                                    pos_diff[1],

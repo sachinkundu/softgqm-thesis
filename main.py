@@ -50,7 +50,11 @@ def main(cloth, n, debug, show_sites):
         logger=logging.getLogger(__name__)
     )
 
-    for _ in range(n):
+    for run_no in range(n):
+
+        logging.info("############################")
+        logging.info(f"Trial No: {run_no + 1}")
+        logging.info("############################")
 
         initial_state = env.reset()
         env.viewer.set_camera(camera_id=0)
@@ -76,7 +80,7 @@ def main(cloth, n, debug, show_sites):
         logging.info(f"random rotation of: {np.rad2deg(theta)}")
         new_ori = np.matmul(tr.rotation_z_axis(np.array([theta]), False),
                             pick_object_pose[:-1, :-1])
-        new_ori = np.matmul(tr.rotation_x_axis(np.array([np.pi / 18]), False), new_ori)
+        new_ori = np.matmul(tr.rotation_y_axis(np.array([0.1 * np.pi]), False), new_ori)
         place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
                                                                                  0.2 * np.random.random_sample() - 0.1
                                                                                     , 0]))
