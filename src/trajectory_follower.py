@@ -7,6 +7,10 @@ Tf = 0.1 * (N - 1)
 np.set_printoptions(precision=3)
 
 
+def position_match(pos1, pos2):
+    return np.allclose(pos1, pos2, rtol=0.001, atol=0.001)
+
+
 def orientation_match(rmat1, rmat2):
     return np.allclose(np.matmul(rmat1, rmat2.T), np.eye(3), rtol=0.01, atol=0.01)
 
@@ -41,8 +45,8 @@ class TrajectoryFollower:
 
             desired_position = desired_pose[:-1, -1]
             step_repeat = False
-            last_angle_command = np.zeros(shape=(3, ))
-            while not np.allclose(desired_position, current_eef_position, rtol=0.001, atol=0.001):
+            last_angle_command = np.zeros(shape=(3,))
+            while not position_match(desired_position, current_eef_position):
                 self.logger.debug(f"taking step: {i}")
                 pos_diff = self.p_gain * (desired_position - current_eef_position)
 
