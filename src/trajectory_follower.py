@@ -7,6 +7,10 @@ Tf = 0.1 * (N - 1)
 np.set_printoptions(precision=3)
 
 
+def orientation_match(rmat1, rmat2):
+    return np.allclose(np.matmul(rmat1, rmat2.T), np.eye(3), rtol=0.01, atol=0.01)
+
+
 class TrajectoryFollower:
     def __init__(self, env, logger):
         self.env = env
@@ -26,6 +30,7 @@ class TrajectoryFollower:
         trajectory = self._calculate_trajectory(destination_hmat, eef_init_pose)
 
         current_eef_position = trajectory[0][:-1, -1]
+        current_eef_hmat = eef_init_pose
         last_obs = None
         for i, (desired_pose, desired_next_pose) in enumerate(zip(trajectory, trajectory[1:])):
 
@@ -61,7 +66,12 @@ class TrajectoryFollower:
                 self.logger.debug(f"action: {action}")
                 obs, reward, done, _ = self.env.step(action.tolist())
                 self.env.render()
+
                 current_eef_position = obs['robot0_eef_pos']
+                current_eef_orientation = obs['robot0_eef_quat']
+                current_eef_hmat = tr.pos_quat_to_hmat(current_eef_position, current_eef_orientation)
+
+                self.logger.info(f"{orientation_match(current_eef_hmat[:-1, :-1], desired_pose[:-1, :-1])}")
                 last_obs = obs
 
         desired_angle = np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1]))
