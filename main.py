@@ -70,25 +70,27 @@ def main(cloth, n, debug, show_sites):
 
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
+        logging.info(f"initial: {tr.quat_axis(initial_state['robot0_eef_quat'])} {tr.quat_angle(initial_state['robot0_eef_quat'])}")
+
         last_obs = env.reach(pick_object_pose, eef_pose)
 
-        env.grasp()
-
-        last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
-
-        theta = np.pi * np.random.random_sample() - np.pi/2
-        logging.info(f"random rotation of: {np.rad2deg(theta)}")
-        new_ori = np.matmul(tr.rotation_z_axis(np.array([theta]), False),
-                            pick_object_pose[:-1, :-1])
-        new_ori = np.matmul(tr.rotation_y_axis(np.array([0.1 * np.pi]), False), new_ori)
-        place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
-                                                                                 0.2 * np.random.random_sample() - 0.1
-                                                                                    , 0]))
-        env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
-
-        env.ungrasp()
-
-        env.home(eef_pose, place_hmat)
+        # env.grasp()
+        #
+        # last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
+        #
+        # theta = np.pi * np.random.random_sample() - np.pi/2
+        # logging.info(f"random rotation of: {np.rad2deg(theta)}")
+        # new_ori = np.matmul(tr.rotation_z_axis(np.array([theta]), False),
+        #                     pick_object_pose[:-1, :-1])
+        # new_ori = np.matmul(tr.rotation_y_axis(np.array([0.1 * np.pi]), False), new_ori)
+        # place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
+        #                                                                          0.2 * np.random.random_sample() - 0.1
+        #                                                                             , 0]))
+        # env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
+        #
+        # env.ungrasp()
+        #
+        # env.home(eef_pose, place_hmat)
 
         cv2.waitKey(1000)
 
