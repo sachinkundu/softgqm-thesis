@@ -52,9 +52,11 @@ class TrajectoryFollower:
             desired_angle = tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1])
 
             # Keep to this frame till both position and orientation are close enough
+            # Keep track of how many times the reconciliation loop runs
+            repeat = 1
             while not position_match(desired_position, current_eef_position) or not angle_match(desired_angle,
                                                                                                 current_eef_angle):
-                self.logger.debug(f"taking step: {i}")
+                self.logger.info(f"""taking step: {i} - {repeat} time{"" if repeat == 1 else "s"}""")
 
                 position_action = self.position_action(desired_position, current_eef_position)
 
@@ -86,6 +88,7 @@ class TrajectoryFollower:
                 # self.logger.info(f"new    axis:      {new_ax_ang}")
 
                 last_obs = obs
+                repeat += 1  # Increment repeat counter
 
         desired_angle = np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1]))
         achieved_angle = np.rad2deg(tr.quat_angle(last_obs['robot0_eef_quat']))
