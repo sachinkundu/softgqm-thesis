@@ -72,9 +72,9 @@ def main(cloth, n, debug, show_sites):
 
         last_obs = env.reach(pick_object_pose, eef_pose)
 
-        # env.grasp()
-        #
-        # last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
+        env.grasp()
+
+        last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
         # theta = np.pi * np.random.random_sample() - np.pi/2
         # logging.info(f"random rotation of: {np.rad2deg(theta)}")

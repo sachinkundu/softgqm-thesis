@@ -15,7 +15,7 @@ def angle_match(desired_angle, current_eef_angle, logger):
     desired_angle_deg = np.rad2deg(desired_angle)
     current_eef_angle_deg = np.rad2deg(current_eef_angle)
     logger.debug(f"desired_angle_deg: {desired_angle_deg:.2f} current_eef_angle_deg: {current_eef_angle_deg:.2f} close: {np.allclose(desired_angle_deg, current_eef_angle_deg, rtol=1.0, atol=1.0)}")
-    return abs(desired_angle_deg - current_eef_angle_deg) < 2.0
+    return abs(desired_angle_deg - current_eef_angle_deg) < 3.6
 
 
 def _calculate_trajectory(destination_hmat, eef_init_hmat):
@@ -56,7 +56,7 @@ class TrajectoryFollower:
         angle_action = np.zeros(shape=(3,))
         if not angle_match(desired_angle, current_eef_angle, logger):
             angle_action = self.ang_gain * desired_axis * (desired_angle - current_eef_angle)
-        logger.info(f"desired_axis: {desired_axis} desired_angle: {np.rad2deg(desired_angle):.2f} current_eef_angle: {np.rad2deg(current_eef_angle):.2f}")
+        logger.debug(f"desired_axis: {desired_axis} desired_angle: {np.rad2deg(desired_angle):.2f} current_eef_angle: {np.rad2deg(current_eef_angle):.2f}")
         return angle_action
 
     def follow(self, destination_hmat, eef_init_pose, grasp_action):
@@ -103,7 +103,7 @@ class TrajectoryFollower:
 
         # Get and print final tracking performance.
         pos_error, angle_error = get_final_errors(destination_hmat, last_obs)
-        self.logger.info(f"Final angle error: {angle_error} deg {np.deg2rad(angle_error)} rad")
-        self.logger.info(f"Final pos   error: {np.linalg.norm(pos_error)}")
+        self.logger.info(f"Final angle error: {angle_error:.2f} deg")
+        self.logger.info(f"Final pos   error: {np.linalg.norm(pos_error):.3f}")
 
         return last_obs
