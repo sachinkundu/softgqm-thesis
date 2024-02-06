@@ -11,8 +11,11 @@ def position_match(pos1, pos2):
     return np.allclose(pos1, pos2, rtol=0.001, atol=0.001)
 
 
-def angle_match(desired_angle, current_eef_angle):
-    return True or np.allclose(desired_angle, current_eef_angle, rtol=0.0174, atol=0.0174)
+def angle_match(desired_angle, current_eef_angle, logger):
+    desired_angle_deg = np.rad2deg(desired_angle)
+    current_eef_angle_deg = np.rad2deg(current_eef_angle)
+    logger.debug(f"desired_angle_deg: {desired_angle_deg:.2f} current_eef_angle_deg: {current_eef_angle_deg:.2f} close: {np.allclose(desired_angle_deg, current_eef_angle_deg, rtol=1.0, atol=1.0)}")
+    return np.allclose(desired_angle_deg, current_eef_angle_deg, rtol=0.9, atol=0.9)
 
 
 def _calculate_trajectory(destination_hmat, eef_init_hmat):
@@ -36,7 +39,7 @@ class TrajectoryFollower:
     def __init__(self, env, logger):
         self.env = env
         self.logger = logger
-        self.p_gain = 20
+        self.p_gain = 10
         self.ang_gain = 2
 
     def position_action(self, desired_position, current_eef_position):
@@ -46,12 +49,12 @@ class TrajectoryFollower:
 
         return position_action
 
-    def angle_action(self, desired_pose, current_eef_angle):
+    def angle_action(self, desired_pose, current_eef_angle, logger):
         desired_axis = tr.quat_axis(tr.hmat_to_pos_quat(desired_pose)[1])
         desired_angle = tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1])
 
         angle_action = np.zeros(shape=(3,))
-        if not angle_match(desired_angle, current_eef_angle):
+        if not angle_match(desired_angle, current_eef_angle, logger):
             angle_action = self.ang_gain * desired_axis * (desired_angle - current_eef_angle)
 
         return angle_action
@@ -77,11 +80,12 @@ class TrajectoryFollower:
             # Keep track of how many times the reconciliation loop runs
             repeat = 1
             while not position_match(desired_position, current_eef_position) or not angle_match(destination_angle,
-                                                                                                current_eef_angle):
+                                                                                                current_eef_angle,
+                                                                                                self.logger):
                 self.logger.debug(f"""taking step: {i} - {repeat} time{"" if repeat == 1 else "s"}""")
 
                 position_action = self.position_action(desired_position, current_eef_position)
-                angle_action = self.angle_action(desired_pose, current_eef_angle)
+                angle_action = self.angle_action(desired_pose, current_eef_angle, self.logger)
 
                 action = np.append(np.hstack((position_action, angle_action)), grasp_action)
 
@@ -97,6 +101,7 @@ class TrajectoryFollower:
                 last_obs = obs
                 repeat += 1  # Increment repeat counter
 
+        # Get and print final tracking performance.
         pos_error, angle_error = get_final_errors(destination_hmat, last_obs)
         self.logger.info(f"Final angle error: {angle_error} deg {np.deg2rad(angle_error)} rad")
         self.logger.info(f"Final pos   error: {np.linalg.norm(pos_error)}")
