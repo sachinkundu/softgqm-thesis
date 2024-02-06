@@ -177,9 +177,10 @@ class UnfoldCloth(SingleArmEnv):
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
                 mujoco_objects=mujoco_objects,
-                x_range=[-0.1, 0.1],
+                x_range=[-0.2, 0.2],
                 y_range=[-0.1, 0.1],
-                rotation=np.pi/6,
+                rotation=(-np.pi/4, np.pi/4),
+                rotation_axis='z',
                 ensure_object_boundary_in_range=False,
                 ensure_valid_placement=True,
                 reference_pos=self.table_offset,
@@ -267,6 +268,9 @@ class UnfoldCloth(SingleArmEnv):
         """
         Resets simulation internal configurations.
         """
+
+        self.grasp_state = -1 # Not grasping to start with
+
         super()._reset_internal()
 
         # Reset all object positions using initializer sampler if we're not directly loading from an xml

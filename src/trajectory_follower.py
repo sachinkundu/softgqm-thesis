@@ -11,66 +11,65 @@ def position_match(pos1, pos2):
     return np.allclose(pos1, pos2, rtol=0.001, atol=0.001)
 
 
-def orientation_match(rmat1, rmat2):
-    return np.allclose(np.matmul(rmat1, rmat2.T), np.eye(3), rtol=0.01, atol=0.01)
+def angle_match(desired_angle, current_eef_angle):
+    return True or np.allclose(desired_angle, current_eef_angle, rtol=0.0174, atol=0.0174)
+
+
+def _calculate_trajectory(destination_hmat, eef_init_hmat):
+    trajectory = mr.CartesianTrajectory(eef_init_hmat, destination_hmat, Tf, N, 5)
+    return trajectory
 
 
 class TrajectoryFollower:
     def __init__(self, env, logger):
         self.env = env
         self.logger = logger
-        self.p_gain = 25
-        self.ang_gain = 1
+        self.p_gain = 20
+        self.ang_gain = 2
 
-    def _calculate_trajectory(self, destination_hmat, eef_init_hmat):
-        self.logger.info(f"dest angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1]))}")
+    def position_action(self, desired_position, current_eef_position):
+        position_action = np.zeros(shape=(3,))
+        if not position_match(desired_position, current_eef_position):
+            position_action = self.p_gain * (desired_position - current_eef_position)
 
-        trajectory = mr.CartesianTrajectory(eef_init_hmat, destination_hmat, Tf, N, 5)
-
-        return trajectory
+        return position_action
 
     def follow(self, destination_hmat, eef_init_pose, grasp_action):
 
-        trajectory = self._calculate_trajectory(destination_hmat, eef_init_pose)
+        trajectory = _calculate_trajectory(destination_hmat, eef_init_pose)
 
-        current_eef_position = trajectory[0][:-1, -1]
-        current_eef_hmat = eef_init_pose
-        current_eef_orientation_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(current_eef_hmat)[1])
-        current_eef_orientation_ang = tr.quat_angle(tr.hmat_to_pos_quat(current_eef_hmat)[1])
+        # Initial state is the eef initial pose
+        current_eef_position = eef_init_pose[:-1, -1]
+        current_eef_angle = tr.quat_angle(tr.hmat_to_pos_quat(eef_init_pose)[1])
+
         last_obs = None
-        for i, (desired_pose, desired_next_pose) in enumerate(zip(trajectory, trajectory[1:])):
+        # Step over the trajectory one frame at a time
+        for i, desired_pose in enumerate(trajectory[1:]):
 
-            self.logger.info(f"starting step: {i}")
-            if np.linalg.norm(current_eef_position - destination_hmat[:-1, -1]) < 0.001:
-                break
+            self.logger.debug(f"starting step: {i}")
 
             desired_position = desired_pose[:-1, -1]
-            step_repeat = False
-            last_angle_command = np.zeros(shape=(3,))
-            frame1_e_ang = tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1])
-            while not position_match(desired_position, current_eef_position) and not np.allclose(frame1_e_ang, current_eef_orientation_ang, rtol=0.01, atol=0.01):
-                self.logger.info(f"taking step: {i}")
-                pos_diff = self.p_gain * (desired_position - current_eef_position)
+            desired_angle = tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1])
 
-                frame1_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1])
-                frame2_e_ax_ang = tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_next_pose)[1])
+            # Keep to this frame till both position and orientation are close enough
+            while not position_match(desired_position, current_eef_position) or not angle_match(desired_angle,
+                                                                                                current_eef_angle):
+                self.logger.debug(f"taking step: {i}")
 
-                frame1_e_ax = tr.quat_axis(tr.hmat_to_pos_quat(desired_pose)[1])
-                frame1_e_ang = tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1])
+                position_action = self.position_action(desired_position, current_eef_position)
 
-                if not step_repeat:
-                    ang_diff = self.ang_gain * (frame2_e_ax_ang - frame1_e_ax_ang)
-                    new_ax_ang = frame1_e_ax * current_eef_orientation_ang
-                    ang_diff = self.ang_gain * (frame2_e_ax_ang - new_ax_ang)
+                # frame1_e_ax = tr.quat_axis(tr.hmat_to_pos_quat(desired_pose)[1])
+                # desired_angle = tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1])
+                #
+                # if not np.allclose(desired_angle, current_eef_angle, rtol=0.01, atol=0.01):
+                #     ang_diff = self.ang_gain * frame1_e_ax * (desired_angle - current_eef_angle)
+                # else:
+                #     ang_diff = np.zeros(shape=(3,))
 
-                    # step_repeat = True
-                    last_angle_command = ang_diff
-                else:
-                    ang_diff = last_angle_command
-
-                action = np.array([pos_diff[0],
-                                   pos_diff[1],
-                                   pos_diff[2],
+                ang_diff = np.zeros(shape=(3,))
+                action = np.array([position_action[0],
+                                   position_action[1],
+                                   position_action[2],
                                    ang_diff[0],
                                    ang_diff[1],
                                    ang_diff[2],
@@ -81,12 +80,10 @@ class TrajectoryFollower:
 
                 current_eef_position = obs['robot0_eef_pos']
                 current_eef_orientation = obs['robot0_eef_quat']
-                current_eef_orientation_ax_ang = tr.quat_to_axisangle(current_eef_orientation)
-                current_eef_hmat = tr.pos_quat_to_hmat(current_eef_position, current_eef_orientation)
-                current_eef_orientation_ang = tr.quat_angle(current_eef_orientation)
+                current_eef_angle = tr.quat_angle(current_eef_orientation)
 
-                self.logger.info(f"frame1_e_ax_ang : {frame1_e_ax_ang}")
-                self.logger.info(f"new    axis:      {new_ax_ang}")
+                # self.logger.info(f"frame1_e_ax_ang : {frame1_e_ax_ang}")
+                # self.logger.info(f"new    axis:      {new_ax_ang}")
 
                 last_obs = obs
 
@@ -97,6 +94,6 @@ class TrajectoryFollower:
         destination_pos = destination_hmat[:-1, -1]
         current_pos = last_obs['robot0_eef_pos']
         pos_error = destination_pos - current_pos
-        self.logger.info(f"Final angle error: {angle_error}")
+        self.logger.info(f"Final angle error: {angle_error} deg {np.deg2rad(angle_error)} rad")
         self.logger.info(f"Final pos   error: {np.linalg.norm(pos_error)}")
         return last_obs
