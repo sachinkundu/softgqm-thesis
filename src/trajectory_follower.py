@@ -34,6 +34,16 @@ class TrajectoryFollower:
 
         return position_action
 
+    def angle_action(self, desired_pose, current_eef_angle):
+        desired_axis = tr.quat_axis(tr.hmat_to_pos_quat(desired_pose)[1])
+        desired_angle = tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1])
+
+        angle_action = np.zeros(shape=(3,))
+        if not angle_match(desired_angle, current_eef_angle):
+            angle_action = self.ang_gain * desired_axis * (desired_angle - current_eef_angle)
+
+        return angle_action
+
     def follow(self, destination_hmat, eef_init_pose, grasp_action):
 
         trajectory = _calculate_trajectory(destination_hmat, eef_init_pose)
@@ -59,23 +69,10 @@ class TrajectoryFollower:
                 self.logger.info(f"""taking step: {i} - {repeat} time{"" if repeat == 1 else "s"}""")
 
                 position_action = self.position_action(desired_position, current_eef_position)
+                angle_action = self.angle_action(desired_pose, current_eef_angle)
 
-                # frame1_e_ax = tr.quat_axis(tr.hmat_to_pos_quat(desired_pose)[1])
-                # desired_angle = tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1])
-                #
-                # if not np.allclose(desired_angle, current_eef_angle, rtol=0.01, atol=0.01):
-                #     ang_diff = self.ang_gain * frame1_e_ax * (desired_angle - current_eef_angle)
-                # else:
-                #     ang_diff = np.zeros(shape=(3,))
+                action = np.append(np.hstack((position_action, angle_action)), grasp_action)
 
-                ang_diff = np.zeros(shape=(3,))
-                action = np.array([position_action[0],
-                                   position_action[1],
-                                   position_action[2],
-                                   ang_diff[0],
-                                   ang_diff[1],
-                                   ang_diff[2],
-                                   grasp_action])
                 self.logger.debug(f"action: {action}")
                 obs, reward, done, _ = self.env.step(action.tolist())
                 self.env.render()
