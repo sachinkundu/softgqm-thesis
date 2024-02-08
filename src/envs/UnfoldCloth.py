@@ -55,7 +55,8 @@ class UnfoldCloth(SingleArmEnv):
             renderer_config=None,
             asset_path=None,
             include_cloth=False,
-            logger=None
+            logger=None,
+            no_ori=False
     ):
         # settings for table-top
         self.table_full_size = table_full_size
@@ -79,6 +80,8 @@ class UnfoldCloth(SingleArmEnv):
         self.logger = logger
 
         self.grasp_state = -1 # Not grasping to start with
+
+        self.no_ori = no_ori
 
         super().__init__(
             robots=robots,
@@ -107,7 +110,7 @@ class UnfoldCloth(SingleArmEnv):
             renderer_config=renderer_config,
         )
 
-        self.trajectory_follower = TrajectoryFollower(self, self.logger)
+        self.trajectory_follower = TrajectoryFollower(self, self.logger, self.no_ori)
 
     def reward(self, action=None):
         return 1.0

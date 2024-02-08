@@ -17,7 +17,8 @@ from dm_robotics.transformations import transformations as tr
 @click.option('--n', default=1, show_default=True, help="number of simulation runs")
 @click.option('--debug', is_flag=True, default=False, show_default=True, help="debug logging")
 @click.option('--show-sites', is_flag=True, default=False, help="include cloth in sim")
-def main(cloth, n, debug, show_sites):
+@click.option('--no-ori', is_flag=True, default=False, help="just position control")
+def main(cloth, n, debug, show_sites, no_ori):
 
     log_level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
@@ -47,7 +48,8 @@ def main(cloth, n, debug, show_sites):
         use_camera_obs=False,
         control_freq=10,
         include_cloth=cloth,
-        logger=logging.getLogger(__name__)
+        logger=logging.getLogger(__name__),
+        no_ori=no_ori
     )
 
     for run_no in range(n):
@@ -76,19 +78,19 @@ def main(cloth, n, debug, show_sites):
 
         last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
-        # theta = np.pi * np.random.random_sample() - np.pi/2
-        # logging.info(f"random rotation of: {np.rad2deg(theta)}")
-        # new_ori = np.matmul(tr.rotation_z_axis(np.array([theta]), False),
-        #                     pick_object_pose[:-1, :-1])
-        # # new_ori = np.matmul(tr.rotation_y_axis(np.array([0.1 * np.pi]), False), new_ori)
-        # place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
-        #                                                                          0.2 * np.random.random_sample() - 0.1
-        #                                                                             , 0]))
-        # env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
-        #
-        # env.ungrasp()
-        #
-        # env.home(eef_pose, place_hmat)
+        theta = np.pi * np.random.random_sample() - np.pi/2
+        logging.info(f"random rotation of: {np.rad2deg(theta)}")
+        new_ori = np.matmul(tr.rotation_z_axis(np.array([theta]), False),
+                            pick_object_pose[:-1, :-1])
+        # new_ori = np.matmul(tr.rotation_y_axis(np.array([0.1 * np.pi]), False), new_ori)
+        place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
+                                                                                 0.2 * np.random.random_sample() - 0.1
+                                                                                    , 0]))
+        env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
+
+        env.ungrasp()
+
+        env.home(eef_pose, place_hmat)
 
         cv2.waitKey(1000)
 
