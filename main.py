@@ -75,30 +75,32 @@ def main(cloth, n, debug, show_sites, no_ori):
 
         last_obs = env.reach(pick_object_pose, eef_pose)
 
-        env.grasp()
+        last_obs = env.grasp()
+
+        logging.info(f"cube before lifting at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
 
         last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
         logging.info(f"cube angle at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
 
         #
-        a = -45
-        b = 45
-        theta_deg = (b - a) * np.random.sample() + a
-        theta = np.deg2rad(theta_deg)
-        logging.info(f"random rotation of: {45}")
-        new_ori = np.matmul(tr.rotation_z_axis(np.array([np.pi/4]), False),
-                            pick_object_pose[:-1, :-1])
-        # new_ori = np.matmul(tr.rotation_y_axis(np.array([0.1 * np.pi]), False), new_ori)
-        place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
-                                                                                 0.2 * np.random.random_sample() - 0.1
-                                                                                    , 0]))
-        # current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
-        # new_ori = np.matmul(tr.rotation_z_axis(np.array([np.pi / 4]), full=True), current_eef_pose)
-        # new_ori[:-1, -1] = pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
-        #                                                          0.2 * np.random.random_sample() - 0.1
-        #                                                             , 0])
-        last_obs = env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
+        # a = -45
+        # b = 45
+        # theta_deg = (b - a) * np.random.sample() + a
+        # theta = np.deg2rad(theta_deg)
+        # logging.info(f"random rotation of: {45}")
+        # new_ori = np.matmul(tr.rotation_z_axis(np.array([-np.pi/4]), False),
+        #                     pick_object_pose[:-1, :-1])
+        # # new_ori = np.matmul(tr.rotation_y_axis(np.array([0.1 * np.pi]), False), new_ori)
+        # place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
+        #                                                                          0.2 * np.random.random_sample() - 0.1
+        #                                                                             , 0]))
+        current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
+        new_ori = np.matmul(tr.rotation_z_axis(np.array([-np.pi / 4]), full=True), current_eef_pose)
+        new_ori[:-1, -1] = pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
+                                                                 0.2 * np.random.random_sample() - 0.1
+                                                                    , 0])
+        last_obs = env.place(new_ori, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
         logging.info(f"cube angle at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
 

@@ -45,7 +45,7 @@ class TrajectoryFollower:
             step_time = time.time()
             self.logger.debug(f"starting step: {i}")
 
-            position_action = 23 * (desired_next_pose[:-1, -1] - desired_pose[:-1, -1])
+            position_action = 20.1 * (desired_next_pose[:-1, -1] - desired_pose[:-1, -1])
             angle_action = 2 * (tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_next_pose)[1]) - tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1]))
 
             # angle_action = np.zeros(shape=(3, ))
@@ -63,8 +63,8 @@ class TrajectoryFollower:
         self.logger.info(f"Trajectory took: {time.time() - start_time} s")
 
         # Get and print final tracking performance.
-        # pos_error, angle_error = get_final_errors(destination_hmat, last_obs)
-        # self.logger.info(f"Final angle error: {angle_error:.2f} deg")
-        # self.logger.info(f"Final pos   error: {np.linalg.norm(pos_error):.3f}")
+        pos_error, angle_error = get_final_errors(destination_hmat, last_obs)
+        self.logger.info(f"Final angle error: {angle_error:.2f} deg")
+        self.logger.info(f"Final pos   error: {np.linalg.norm(pos_error):.3f}")
 
         return last_obs
