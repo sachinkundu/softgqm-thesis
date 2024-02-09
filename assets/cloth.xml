@@ -11,9 +11,9 @@
         <light diffuse=".6 .6 .6" specular="0.2 0.2 0.2" pos="0 0 4" dir="0 0 -1"/>
         <body>
             <body name="object" pos="0 0 0.9">
-                <flexcomp type="grid" count="20 10 1" spacing=".025 .025 .025" mass="1.0"
+                <flexcomp type="grid" count="20 10 1" spacing=".025 .025 .025" mass="0.5"
                           name="cloth" radius="0.003">
-                    <contact condim="5" solref="0.001" friction="2"/>
+                    <contact condim="5" solref="0.05" friction="3"/>
                     <edge equality="true" damping="1.0"/>
                     <plugin plugin="mujoco.elasticity.shell">
                         <config key="poisson" value="0.4032740512363587"/>

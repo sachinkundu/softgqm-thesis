@@ -182,7 +182,7 @@ class UnfoldCloth(SingleArmEnv):
                 mujoco_objects=mujoco_objects,
                 x_range=[-0.2, 0.2],
                 y_range=[-0.1, 0.1],
-                rotation=(-np.pi/4, np.pi/4),
+                rotation=None,
                 rotation_axis='z',
                 ensure_object_boundary_in_range=False,
                 ensure_valid_placement=True,
@@ -315,9 +315,9 @@ class UnfoldCloth(SingleArmEnv):
         lift_pose = modern_robotics.RpToTrans(eef_pose[:-1, :-1], eef_pose[:-1, -1] + [0, 0, height])
         return self.trajectory_follower.follow(lift_pose, eef_pose, self.grasp_state)
 
-    def place(self, place_hmat, eef_init_pose):
+    def place(self, place_hmat, eef_init_pose, angle_rotate=0):
         self.logger.info("place")
-        return self.trajectory_follower.follow(place_hmat, eef_init_pose, self.grasp_state)
+        return self.trajectory_follower.follow(place_hmat, eef_init_pose, self.grasp_state, angle_rotate)
 
     def home(self, home_hmat, eef_init_pose):
         self.logger.info("home")
