@@ -41,24 +41,27 @@ class TrajectoryFollower:
         last_obs = None
         # Step over the trajectory one frame at a time
         start_time = time.time()
+        current_eef_position = eef_init_pose[:-1, -1]
         for i, (desired_pose, desired_next_pose) in enumerate(zip(trajectory, trajectory[1:])):
             step_time = time.time()
             self.logger.debug(f"starting step: {i}")
 
-            position_action = 20.1 * (desired_next_pose[:-1, -1] - desired_pose[:-1, -1])
             angle_action = 2 * (tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_next_pose)[1]) - tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1]))
+            while not np.allclose(desired_pose[:-1, -1], current_eef_position, rtol=0.001, atol=0.001):
+                position_action = 20.1 * (desired_pose[:-1, -1] - current_eef_position)
 
-            # angle_action = np.zeros(shape=(3, ))
+                # angle_action = np.zeros(shape=(3, ))
 
-            action = np.append(np.hstack((position_action, angle_action)), grasp_action)
-            obs, reward, done, _ = self.env.step(action.tolist())
-            self.env.render()
-            step_end_time = time.time()
+                action = np.append(np.hstack((position_action, angle_action)), grasp_action)
+                obs, reward, done, _ = self.env.step(action.tolist())
+                self.env.render()
+                step_end_time = time.time()
 
-            self.logger.debug(f"Step {i} took: {step_end_time - step_time} s")
-            last_obs = obs
+                self.logger.debug(f"Step {i} took: {step_end_time - step_time} s")
+                last_obs = obs
+                current_eef_position = last_obs['robot0_eef_pos']
 
-            self.logger.info(f"pos error: {np.linalg.norm(desired_next_pose[:-1, -1] - last_obs['robot0_eef_pos']):.3f}")
+                self.logger.info(f"pos error: {np.linalg.norm(desired_next_pose[:-1, -1] - last_obs['robot0_eef_pos']):.3f}")
 
         self.logger.info(f"Trajectory took: {time.time() - start_time} s")
 
