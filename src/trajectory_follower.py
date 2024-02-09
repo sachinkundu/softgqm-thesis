@@ -40,22 +40,22 @@ class TrajectoryFollower:
 
         last_obs = None
         # Step over the trajectory one frame at a time
-        ang_gain = abs(tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1]) - tr.quat_angle(
-            tr.hmat_to_pos_quat(eef_init_pose)[1]))
-        self.logger.info(f"ang_gain: {ang_gain}")
         start_time = time.time()
         for i, (desired_pose, desired_next_pose) in enumerate(zip(trajectory, trajectory[1:])):
             step_time = time.time()
             self.logger.debug(f"starting step: {i}")
 
-            position_action = 21 * (desired_next_pose[:-1, -1] - desired_pose[:-1, -1])
+            position_action = 20 * (desired_next_pose[:-1, -1] - desired_pose[:-1, -1])
             angle_action = 2 * (tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_next_pose)[1]) - tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1]))
+
+            # angle_action = np.zeros(shape=(3, ))
+
             action = np.append(np.hstack((position_action, angle_action)), grasp_action)
             obs, reward, done, _ = self.env.step(action.tolist())
             self.env.render()
             step_end_time = time.time()
 
-            self.logger.info(f"Step {i} took: {step_end_time - step_time} s")
+            self.logger.debug(f"Step {i} took: {step_end_time - step_time} s")
             last_obs = obs
 
         self.logger.info(f"Trajectory took: {time.time() - start_time} s")

@@ -19,7 +19,6 @@ from dm_robotics.transformations import transformations as tr
 @click.option('--show-sites', is_flag=True, default=False, help="include cloth in sim")
 @click.option('--no-ori', is_flag=True, default=False, help="just position control")
 def main(cloth, n, debug, show_sites, no_ori):
-
     log_level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
 
@@ -34,10 +33,10 @@ def main(cloth, n, debug, show_sites, no_ori):
     controller_name = "OSC_POSE"
 
     controller_config = load_controller_config(default_controller=controller_name)
+    # controller_config['uncouple_pos_ori'] = True
 
     # Load the desired controller
     options["controller_configs"] = controller_config
-
 
     # initialize the task
     env: UnfoldCloth = suite.make(
@@ -59,7 +58,7 @@ def main(cloth, n, debug, show_sites, no_ori):
         logging.info("############################")
 
         initial_state = env.reset()
-        env.viewer.set_camera(camera_id=2)
+        env.viewer.set_camera(camera_id=0)
 
         if show_sites:
             env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
@@ -70,34 +69,37 @@ def main(cloth, n, debug, show_sites, no_ori):
         else:
             pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
 
-        eef_initial_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
+        eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
-        eef_pose_copy = eef_initial_pose.copy()
-
-        last_obs = env.reach(pick_object_pose, eef_initial_pose)
+        last_obs = env.reach(pick_object_pose, eef_pose)
 
         env.grasp()
 
         last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
-
-        # a, b = -30, 30
-        # theta_deg = (b - a) * np.random.random_sample() + a
-        # logging.info(f"random rotation of : {theta_deg}")
-        new_ori = np.matmul(tr.rotation_z_axis(np.array([np.deg2rad(np.deg2rad(45))]), False), pick_object_pose[:-1, :-1])
-        # new_ori = np.matmul(tr.rotation_y_axis(np.array([theta_deg]), False), pick_object_pose[:-1, :-1])
+        #
+        theta = np.pi * np.random.random_sample() - np.pi/2
+        logging.info(f"random rotation of: {np.rad2deg(theta)}")
+        new_ori = np.matmul(tr.rotation_z_axis(np.array([theta]), False),
+                            pick_object_pose[:-1, :-1])
+        # new_ori = np.matmul(tr.rotation_y_axis(np.array([0.1 * np.pi]), False), new_ori)
         place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
                                                                                  0.2 * np.random.random_sample() - 0.1
                                                                                     , 0]))
+        # current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
+        # new_ori = np.matmul(tr.rotation_z_axis(np.array([np.pi / 4]), full=True), current_eef_pose)
+        # new_ori[:-1, -1] = pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
+        #                                                          0.2 * np.random.random_sample() - 0.1
+        #                                                             , 0])
         last_obs = env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
-
-        # place_hmat = pick_object_pose
-        # last_obs = env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
         env.ungrasp()
 
-        assert (np.allclose(eef_pose_copy, eef_initial_pose))
+        # current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
+        # new_ori = np.matmul(tr.rotation_z_axis(np.array([-np.pi / 4]), full=True), current_eef_pose)
+        #
+        # last_obs = env.lift(new_ori, height=0.2)
 
-        env.home(eef_initial_pose, place_hmat)
+        env.home(eef_pose, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
         cv2.waitKey(1000)
 
