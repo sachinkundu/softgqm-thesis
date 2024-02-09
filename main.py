@@ -71,15 +71,23 @@ def main(cloth, n, debug, show_sites, no_ori):
 
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
+        logging.info(f"cube initialized at {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(pick_object_pose)[1]))}")
+
         last_obs = env.reach(pick_object_pose, eef_pose)
 
         env.grasp()
 
         last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
+
+        logging.info(f"cube angle at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
+
         #
-        theta = np.pi * np.random.random_sample() - np.pi/2
-        logging.info(f"random rotation of: {np.rad2deg(theta)}")
-        new_ori = np.matmul(tr.rotation_z_axis(np.array([theta]), False),
+        a = -45
+        b = 45
+        theta_deg = (b - a) * np.random.sample() + a
+        theta = np.deg2rad(theta_deg)
+        logging.info(f"random rotation of: {45}")
+        new_ori = np.matmul(tr.rotation_z_axis(np.array([np.pi/4]), False),
                             pick_object_pose[:-1, :-1])
         # new_ori = np.matmul(tr.rotation_y_axis(np.array([0.1 * np.pi]), False), new_ori)
         place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
@@ -92,6 +100,8 @@ def main(cloth, n, debug, show_sites, no_ori):
         #                                                             , 0])
         last_obs = env.place(place_hmat, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
+        logging.info(f"cube angle at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
+
         env.ungrasp()
 
         # current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
@@ -99,7 +109,13 @@ def main(cloth, n, debug, show_sites, no_ori):
         #
         # last_obs = env.lift(new_ori, height=0.2)
 
-        env.home(eef_pose, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
+        # env.home(eef_pose, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
+
+        j_traj = mr.JointTrajectory(env.robots[0].recent_qpos.current, env.robots[0].init_qpos, 5, 100, 5)
+
+        for jnt in j_traj:
+            env.robots[0].set_robot_joint_positions(jnt)
+            env.render()
 
         cv2.waitKey(1000)
 
