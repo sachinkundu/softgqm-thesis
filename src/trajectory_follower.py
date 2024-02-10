@@ -46,7 +46,8 @@ class TrajectoryFollower:
             step_time = time.time()
             self.logger.debug(f"starting step: {i}")
 
-            angle_action = 2 * (tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_next_pose)[1]) - tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1]))
+            angle_action = 1.8 * (tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_next_pose)[1]) - tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1]))
+            repeat = 0
             while not np.allclose(desired_pose[:-1, -1], current_eef_position, rtol=0.001, atol=0.001):
                 position_action = 20.1 * (desired_pose[:-1, -1] - current_eef_position)
 
@@ -61,7 +62,15 @@ class TrajectoryFollower:
                 last_obs = obs
                 current_eef_position = last_obs['robot0_eef_pos']
 
-                self.logger.info(f"pos error: {np.linalg.norm(desired_next_pose[:-1, -1] - last_obs['robot0_eef_pos']):.3f}")
+                current_eef_angle = tr.quat_angle(last_obs['robot0_eef_quat'])
+
+                # self.logger.info(f"desired angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(desired_next_pose)[1]))} current angle: {np.rad2deg(current_eef_angle)}")
+                # self.logger.info(
+                #     f"diff: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(desired_next_pose)[1])) - np.rad2deg(current_eef_angle)}")
+                # self.logger.info(f"pos error: {np.linalg.norm(desired_next_pose[:-1, -1] - last_obs['robot0_eef_pos']):.3f}")
+                repeat += 1
+                if repeat > 50:
+                    break
 
         self.logger.info(f"Trajectory took: {time.time() - start_time} s")
 

@@ -71,7 +71,8 @@ def main(cloth, n, debug, show_sites, no_ori):
 
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
-        logging.info(f"cube initialized at {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(pick_object_pose)[1]))}")
+        initial_cube_angle = tr.quat_angle(tr.hmat_to_pos_quat(pick_object_pose)[1])
+        logging.info(f"cube initialized at {np.rad2deg(initial_cube_angle)}")
 
         last_obs = env.reach(pick_object_pose, eef_pose)
 
@@ -83,20 +84,13 @@ def main(cloth, n, debug, show_sites, no_ori):
 
         logging.info(f"cube angle at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
 
-        #
         # a = -45
         # b = 45
         # theta_deg = (b - a) * np.random.sample() + a
         # theta = np.deg2rad(theta_deg)
-        # logging.info(f"random rotation of: {45}")
-        # new_ori = np.matmul(tr.rotation_z_axis(np.array([-np.pi/4]), False),
-        #                     pick_object_pose[:-1, :-1])
-        # # new_ori = np.matmul(tr.rotation_y_axis(np.array([0.1 * np.pi]), False), new_ori)
-        # place_hmat = mr.RpToTrans(new_ori, pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
-        #                                                                          0.2 * np.random.random_sample() - 0.1
-        #                                                                             , 0]))
+        # logging.info(f"random rotation of: {theta_deg}")
         current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
-        new_ori = np.matmul(tr.rotation_z_axis(np.array([-np.pi / 4]), full=True), current_eef_pose)
+        new_ori = np.matmul(tr.rotation_z_axis(np.array([-initial_cube_angle]), full=True), current_eef_pose)
         new_ori[:-1, -1] = pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
                                                                  0.2 * np.random.random_sample() - 0.1
                                                                     , 0])
