@@ -12,6 +12,11 @@ from robosuite.controllers import load_controller_config
 from dm_robotics.transformations import transformations as tr
 
 
+def get_random_angle(a, b):
+    theta_deg = (b - a) * np.random.sample() + a
+    return np.deg2rad(theta_deg)
+
+
 @click.command()
 @click.option('--cloth', is_flag=True, help="include cloth in sim")
 @click.option('--n', default=1, show_default=True, help="number of simulation runs")
@@ -69,7 +74,8 @@ def main(cloth, n, debug, show_sites, no_ori):
         else:
             pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
 
-        pick_object_pose[:-1, :-1] = np.matmul(tr.rotation_y_axis(np.array([np.deg2rad(-30)]), full=False), pick_object_pose[:-1, :-1])
+        angle = get_random_angle(-30, -20)
+        pick_object_pose[:-1, :-1] = np.matmul(tr.rotation_y_axis(np.array([angle]), full=False), pick_object_pose[:-1, :-1])
 
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
@@ -89,7 +95,7 @@ def main(cloth, n, debug, show_sites, no_ori):
         current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
 
         new_ori = np.matmul(tr.rotation_z_axis(np.array([-initial_cube_angle]), full=True), current_eef_pose)
-        new_ori = np.matmul(tr.rotation_y_axis(np.array([np.deg2rad(30)]), full=True), new_ori)
+        new_ori = np.matmul(tr.rotation_y_axis(np.array([-angle]), full=True), new_ori)
 
         new_ori[:-1, -1] = pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
                                                                  0.2 * np.random.random_sample() - 0.1
