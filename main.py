@@ -69,6 +69,8 @@ def main(cloth, n, debug, show_sites, no_ori):
         else:
             pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
 
+        pick_object_pose[:-1, :-1] = np.matmul(tr.rotation_y_axis(np.array([np.deg2rad(-30)]), full=False), pick_object_pose[:-1, :-1])
+
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
         initial_cube_angle = tr.quat_angle(tr.hmat_to_pos_quat(pick_object_pose)[1])
@@ -85,7 +87,10 @@ def main(cloth, n, debug, show_sites, no_ori):
         logging.info(f"cube angle at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
 
         current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
+
         new_ori = np.matmul(tr.rotation_z_axis(np.array([-initial_cube_angle]), full=True), current_eef_pose)
+        new_ori = np.matmul(tr.rotation_y_axis(np.array([np.deg2rad(30)]), full=True), new_ori)
+
         new_ori[:-1, -1] = pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
                                                                  0.2 * np.random.random_sample() - 0.1
                                                                     , 0])

@@ -30,8 +30,8 @@ class TrajectoryFollower:
     def __init__(self, env, logger, no_ori=False):
         self.env = env
         self.logger = logger
-        self.p_gain = 20.1
-        self.ang_gain = 10
+        self.p_gain = 20
+        self.ang_gain = 3
         self.no_ori = no_ori
 
     def follow(self, destination_hmat, eef_init_pose, grasp_action, angle_rotate=0):
@@ -42,14 +42,14 @@ class TrajectoryFollower:
         # Step over the trajectory one frame at a time
         start_time = time.time()
         current_eef_position = eef_init_pose[:-1, -1]
-        ang_gain = self.ang_gain * abs(tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1]) - tr.quat_angle(tr.hmat_to_pos_quat(eef_init_pose)[1]))
+        # ang_gain = self.ang_gain * abs(tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1]) - tr.quat_angle(tr.hmat_to_pos_quat(eef_init_pose)[1]))
         for i, (desired_pose, desired_next_pose) in enumerate(zip(trajectory, trajectory[1:])):
             step_time = time.time()
             self.logger.debug(f"starting step: {i}")
 
-            angle_action = ang_gain * (tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_next_pose)[1]) - tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1]))
+            angle_action = self.ang_gain * (tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_next_pose)[1]) - tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1]))
             repeat = 0
-            while not np.allclose(desired_pose[:-1, -1], current_eef_position, rtol=0.002, atol=0.002):
+            while not np.allclose(desired_pose[:-1, -1], current_eef_position, rtol=0.005, atol=0.005):
                 position_action = self.p_gain * (desired_pose[:-1, -1] - current_eef_position)
 
                 # angle_action = np.zeros(shape=(3, ))
