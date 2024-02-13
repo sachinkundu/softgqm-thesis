@@ -38,7 +38,8 @@ def main(cloth, n, debug, show_sites, no_ori):
     controller_name = "OSC_POSE"
 
     controller_config = load_controller_config(default_controller=controller_name)
-    # controller_config['uncouple_pos_ori'] = True
+    controller_config['kd'] = [24.495, 24.495, 24.495, 24.495, 24.495, 24.495]
+    controller_config['kp'] = [150., 150., 150., 150., 150., 150.]
 
     # Load the desired controller
     options["controller_configs"] = controller_config
@@ -74,8 +75,8 @@ def main(cloth, n, debug, show_sites, no_ori):
         else:
             pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
 
-        angle = get_random_angle(-30, -20)
-        pick_object_pose[:-1, :-1] = np.matmul(tr.rotation_y_axis(np.array([angle]), full=False), pick_object_pose[:-1, :-1])
+        # angle = get_random_angle(-45, -30)
+        # pick_object_pose[:-1, :-1] = np.matmul(tr.rotation_y_axis(np.array([angle]), full=False), pick_object_pose[:-1, :-1])
 
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
@@ -94,8 +95,15 @@ def main(cloth, n, debug, show_sites, no_ori):
 
         current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
 
-        new_ori = np.matmul(tr.rotation_z_axis(np.array([-initial_cube_angle]), full=True), current_eef_pose)
-        new_ori = np.matmul(tr.rotation_y_axis(np.array([-angle]), full=True), new_ori)
+        current_eef_angle = tr.quat_angle(last_obs['robot0_eef_quat'])
+
+        logging.info(f"current_eef_angle: {np.rad2deg(current_eef_angle)}")
+
+        new_ori = np.matmul(tr.rotation_z_axis(np.array([current_eef_angle]), full=True), current_eef_pose)
+
+        logging.info(f"new_ori_angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(new_ori)[1]))}")
+
+        # new_ori = np.matmul(tr.rotation_y_axis(np.array([-angle]), full=True), new_ori)
 
         new_ori[:-1, -1] = pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
                                                                  0.2 * np.random.random_sample() - 0.1

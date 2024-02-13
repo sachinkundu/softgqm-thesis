@@ -2,6 +2,8 @@ import numpy as np
 import modern_robotics as mr
 from dm_robotics.transformations import transformations as tr
 
+from matplotlib import pyplot as plt
+
 import time
 
 N = 50
@@ -31,7 +33,7 @@ class TrajectoryFollower:
         self.env = env
         self.logger = logger
         self.p_gain = 20
-        self.ang_gain = 3
+        self.ang_gain = 2.3
         self.no_ori = no_ori
 
     def follow(self, destination_hmat, eef_init_pose, grasp_action, angle_rotate=0):
@@ -42,17 +44,38 @@ class TrajectoryFollower:
         # Step over the trajectory one frame at a time
         start_time = time.time()
         current_eef_position = eef_init_pose[:-1, -1]
+        current_eef_quat = tr.hmat_to_pos_quat(eef_init_pose)[1]
         # ang_gain = self.ang_gain * abs(tr.quat_angle(tr.hmat_to_pos_quat(destination_hmat)[1]) - tr.quat_angle(tr.hmat_to_pos_quat(eef_init_pose)[1]))
+
+        desired_pos = []
+        eef_pos = []
+
+        desired_y = []
+        eef_y = []
+
         for i, (desired_pose, desired_next_pose) in enumerate(zip(trajectory, trajectory[1:])):
             step_time = time.time()
+
             self.logger.debug(f"starting step: {i}")
 
+            self.logger.info(f"desired_ang: {tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1])} current_eef_ang: {tr.quat_angle(current_eef_quat)}")
+
             angle_action = self.ang_gain * (tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_next_pose)[1]) - tr.quat_to_axisangle(tr.hmat_to_pos_quat(desired_pose)[1]))
+            # ang_diff = tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1]) - tr.quat_angle(current_eef_quat)
+            # angle_action = self.ang_gain * tr.quat_axis(tr.hmat_to_pos_quat(desired_pose)[1]) * ang_diff
             repeat = 0
             while not np.allclose(desired_pose[:-1, -1], current_eef_position, rtol=0.005, atol=0.005):
+
+                desired_pos.append(desired_pose[:-1, -1])
+                eef_pos.append(current_eef_position)
+
+                desired_y.append(tr.quat_to_euler(tr.hmat_to_pos_quat(desired_pose)[1]))
+                eef_y.append(tr.quat_to_euler(current_eef_quat))
+
                 position_action = self.p_gain * (desired_pose[:-1, -1] - current_eef_position)
 
-                # angle_action = np.zeros(shape=(3, ))
+                if repeat > 0:
+                    angle_action = np.zeros(shape=(3, ))
 
                 action = np.append(np.hstack((position_action, angle_action)), grasp_action)
                 obs, reward, done, _ = self.env.step(action.tolist())
@@ -63,7 +86,7 @@ class TrajectoryFollower:
                 last_obs = obs
                 current_eef_position = last_obs['robot0_eef_pos']
 
-                current_eef_angle = tr.quat_angle(last_obs['robot0_eef_quat'])
+                current_eef_quat = last_obs['robot0_eef_quat']
 
                 # self.logger.info(f"desired angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(desired_next_pose)[1]))} current angle: {np.rad2deg(current_eef_angle)}")
                 # self.logger.info(
@@ -74,6 +97,15 @@ class TrajectoryFollower:
                     break
 
         self.logger.info(f"Trajectory took: {time.time() - start_time} s")
+
+        # self.logger.info(f"{eef_pos}")
+
+        # plt.plot(list(range(len(desired_pos))), (np.array(desired_pos)[:, 2]), 'g^', list(range(len(eef_pos))), (np.array(eef_pos)[:, 2]), 'g-')
+        # plt.show()
+        #
+        # plt.plot(list(range(len(desired_y))), (np.array(desired_y)[:, 2]), 'g^', list(range(len(eef_y))), (np.array(eef_y)[:, 2]))
+        # plt.show()
+
 
         # Get and print final tracking performance.
         pos_error, angle_error = get_final_errors(destination_hmat, last_obs)

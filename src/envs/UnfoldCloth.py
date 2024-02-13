@@ -180,9 +180,9 @@ class UnfoldCloth(SingleArmEnv):
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
                 mujoco_objects=mujoco_objects,
-                x_range=[-0.2, 0.2],
-                y_range=[-0.1, 0.1],
-                rotation=(-np.pi/4, np.pi/4),
+                x_range=[0, 0.15],
+                y_range=[-0.2, 0.2],
+                rotation=np.pi/4,
                 rotation_axis='z',
                 ensure_object_boundary_in_range=False,
                 ensure_valid_placement=True,
