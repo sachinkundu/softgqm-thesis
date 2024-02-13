@@ -32,8 +32,8 @@ class TrajectoryFollower:
     def __init__(self, env, logger, no_ori=False):
         self.env = env
         self.logger = logger
-        self.p_gain = 15
-        self.ang_gain = 2.3
+        self.p_gain = 12
+        self.ang_gain = 2.1
         self.no_ori = no_ori
 
     def follow(self, destination_hmat, eef_init_pose, grasp_action, angle_rotate=0):
@@ -64,37 +64,36 @@ class TrajectoryFollower:
             # ang_diff = tr.quat_angle(tr.hmat_to_pos_quat(desired_pose)[1]) - tr.quat_angle(current_eef_quat)
             # angle_action = self.ang_gain * tr.quat_axis(tr.hmat_to_pos_quat(desired_pose)[1]) * ang_diff
             repeat = 0
-            while not np.allclose(desired_pose[:-1, -1], current_eef_position, rtol=0.005, atol=0.005):
 
-                desired_pos.append(desired_pose[:-1, -1])
-                eef_pos.append(current_eef_position)
+            desired_pos.append(desired_pose[:-1, -1])
+            eef_pos.append(current_eef_position)
 
-                desired_y.append(tr.quat_to_euler(tr.hmat_to_pos_quat(desired_pose)[1]))
-                eef_y.append(tr.quat_to_euler(current_eef_quat))
+            desired_y.append(tr.quat_to_euler(tr.hmat_to_pos_quat(desired_pose)[1]))
+            eef_y.append(tr.quat_to_euler(current_eef_quat))
 
-                position_action = self.p_gain * (desired_pose[:-1, -1] - current_eef_position)
+            position_action = self.p_gain * (desired_pose[:-1, -1] - current_eef_position)
 
-                if repeat > 0:
-                    angle_action = np.zeros(shape=(3, ))
+            if repeat > 0:
+                angle_action = np.zeros(shape=(3, ))
 
-                action = np.append(np.hstack((position_action, angle_action)), grasp_action)
-                obs, reward, done, _ = self.env.step(action.tolist())
-                self.env.render()
-                step_end_time = time.time()
+            action = np.append(np.hstack((position_action, angle_action)), grasp_action)
+            obs, reward, done, _ = self.env.step(action.tolist())
+            self.env.render()
+            step_end_time = time.time()
 
-                self.logger.debug(f"Step {i} took: {step_end_time - step_time} s")
-                last_obs = obs
-                current_eef_position = last_obs['robot0_eef_pos']
+            self.logger.debug(f"Step {i} took: {step_end_time - step_time} s")
+            last_obs = obs
+            current_eef_position = last_obs['robot0_eef_pos']
 
-                current_eef_quat = last_obs['robot0_eef_quat']
+            current_eef_quat = last_obs['robot0_eef_quat']
 
                 # self.logger.info(f"desired angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(desired_next_pose)[1]))} current angle: {np.rad2deg(current_eef_angle)}")
                 # self.logger.info(
                 #     f"diff: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(desired_next_pose)[1])) - np.rad2deg(current_eef_angle)}")
                 # self.logger.info(f"pos error: {np.linalg.norm(desired_next_pose[:-1, -1] - last_obs['robot0_eef_pos']):.3f}")
-                repeat += 1
-                if repeat > 50:
-                    break
+                # repeat += 1
+                # if repeat > 50:
+                #     break
 
         self.logger.info(f"Trajectory took: {time.time() - start_time} s")
 

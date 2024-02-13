@@ -51,7 +51,7 @@ def main(cloth, n, debug, show_sites, no_ori):
         has_offscreen_renderer=True,
         ignore_done=True,
         use_camera_obs=False,
-        control_freq=3,
+        control_freq=2,
         include_cloth=cloth,
         logger=logging.getLogger(__name__),
         no_ori=no_ori
@@ -78,12 +78,17 @@ def main(cloth, n, debug, show_sites, no_ori):
         angle = get_random_angle(-45, -30)
         pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1], tr.rotation_y_axis(np.array([angle]), full=False))
 
+        hover_pose = pick_object_pose.copy()
+        hover_pose[:-1, -1] = hover_pose[:-1, -1] + np.array([0, 0, 0.05])
+
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
         initial_cube_angle = tr.quat_angle(tr.hmat_to_pos_quat(pick_object_pose)[1])
         logging.info(f"cube initialized at {np.rad2deg(initial_cube_angle)}")
 
-        last_obs = env.reach(pick_object_pose, eef_pose)
+        last_obs = env.reach(hover_pose, eef_pose)
+
+        last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']), height=-0.05)
 
         last_obs = env.grasp()
 
