@@ -32,7 +32,7 @@ class TrajectoryFollower:
     def __init__(self, env, logger, no_ori=False):
         self.env = env
         self.logger = logger
-        self.p_gain = 20
+        self.p_gain = 15
         self.ang_gain = 2.3
         self.no_ori = no_ori
 
