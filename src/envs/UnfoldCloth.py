@@ -142,7 +142,7 @@ class UnfoldCloth(SingleArmEnv):
         )
 
     def _create_cloth(self):
-        return ClothObject(str((Path(self.asset_path) / "cloth.xml").resolve()), "cloth")
+        return ClothObject(str((Path(self.asset_path) / "cloth_3.xml").resolve()), "cloth")
 
     def _load_model(self):
         """
@@ -175,11 +175,11 @@ class UnfoldCloth(SingleArmEnv):
         # Create placement initializer
         if self.placement_initializer is not None:
             self.placement_initializer.reset()
-            self.placement_initializer.add_objects(mujoco_objects)
+            self.placement_initializer.add_objects(self.cube)
         else:
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
-                mujoco_objects=mujoco_objects,
+                mujoco_objects=self.cube,
                 x_range=[0, 0.15],
                 y_range=[-0.2, 0.2],
                 rotation=(-np.pi/4, np.pi/4),
