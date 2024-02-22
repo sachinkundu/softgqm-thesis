@@ -1,3 +1,5 @@
+import time
+
 import cv2
 import click
 import mujoco
@@ -44,17 +46,21 @@ def main(cloth, n, debug, show_sites, no_ori):
     # Load the desired controller
     options["controller_configs"] = controller_config
 
+    # ('frontview', 'birdview', 'agentview', 'sideview', 'qdp', 'robot0_robotview', 'robot0_eye_in_hand')
+    camera_to_use = "agentview"
     # initialize the task
     env: UnfoldCloth = suite.make(
         **options,
         has_renderer=True,
         has_offscreen_renderer=True,
         ignore_done=True,
-        use_camera_obs=False,
+        use_camera_obs=True,
         control_freq=2,
         include_cloth=cloth,
         logger=logging.getLogger(__name__),
-        no_ori=no_ori
+        camera_depths=True,
+        camera_names=camera_to_use,
+        camera_segmentations="element",  # {None, instance, class, element}
     )
 
     for run_no in range(n):
@@ -64,27 +70,35 @@ def main(cloth, n, debug, show_sites, no_ori):
         logging.info("############################")
 
         initial_state = env.reset()
-        env.viewer.set_camera(camera_id=0)
+
+        agent_view_camera_id = env.sim.model.camera_name2id(camera_to_use)
+        env.viewer.set_camera(camera_id=agent_view_camera_id)
 
         if show_sites:
             env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
 
         if cloth:
-            pick_object_pose = tr.pos_quat_to_hmat(initial_state['cloth_pos'], initial_state['cloth_quat'])
-            pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
+            # start = time.time()
+            # while time.time() < start + 60:
+            #     env.sim.forward()
+
+            pick_object_pose = tr.pos_quat_to_hmat(env.sim.data.body_xpos[env.sim.model.body_name2id("cloth_40")],
+                                                   env.sim.data.body_xquat[env.sim.model.body_name2id("cloth_40")])
+            logging.info(f"pick_object_pos: {pick_object_pose[:-1, -1]}")
         else:
             pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
 
         angle = get_random_angle(-45, -30)
-        pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1], tr.rotation_y_axis(np.array([angle]), full=False))
+        pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1],
+                                               tr.rotation_y_axis(np.array([angle]), full=False))
 
         hover_pose = pick_object_pose.copy()
         hover_pose[:-1, -1] = hover_pose[:-1, -1] + np.array([0, 0, 0.05])
 
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
-        initial_cube_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
-        logging.info(f"cube initialized at {np.rad2deg(initial_cube_angle)}")
+        initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
+        logging.info(f"initial_pick_pose_angle at {np.rad2deg(initial_pick_pose_angle)}")
 
         last_obs = env.reach(hover_pose, eef_pose)
 
@@ -92,11 +106,13 @@ def main(cloth, n, debug, show_sites, no_ori):
 
         last_obs = env.grasp()
 
-        logging.info(f"cube before lifting at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
+        if not cloth:
+            logging.info(f"cube before lifting at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
 
         last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
-        logging.info(f"cube angle at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
+        if not cloth:
+            logging.info(f"cube angle at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
 
         current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
 
@@ -104,7 +120,7 @@ def main(cloth, n, debug, show_sites, no_ori):
 
         logging.info(f"current_eef_angle: {np.rad2deg(current_eef_angle)}")
 
-        new_ori = np.matmul(tr.rotation_z_axis(np.array([-initial_cube_angle]), full=True), current_eef_pose)
+        new_ori = np.matmul(tr.rotation_z_axis(np.array([-initial_pick_pose_angle]), full=True), current_eef_pose)
 
         logging.info(f"new_ori_angle: {np.rad2deg(tr.quat_angle(tr.hmat_to_pos_quat(new_ori)[1]))}")
 
@@ -115,7 +131,8 @@ def main(cloth, n, debug, show_sites, no_ori):
                                                                     , 0])
         last_obs = env.place(new_ori, tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
 
-        logging.info(f"cube angle at {np.rad2deg(tr.quat_to_euler(last_obs['cube_quat']))}")
+        if not cloth:
+            logging.info(f"cube angle at {np.rad2deg(tr.quat_to_euler(last_obs['cube_quat']))}")
 
         env.ungrasp()
 

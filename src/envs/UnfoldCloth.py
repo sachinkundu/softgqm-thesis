@@ -142,7 +142,7 @@ class UnfoldCloth(SingleArmEnv):
         )
 
     def _create_cloth(self):
-        return ClothObject(str((Path(self.asset_path) / "cloth_3.xml").resolve()), "cloth")
+        return ClothObject(str((Path(self.asset_path) / "cloth_4.xml").resolve()), "cloth")
 
     def _load_model(self):
         """
@@ -165,30 +165,31 @@ class UnfoldCloth(SingleArmEnv):
         mujoco_arena.set_origin([0, 0, 0])
 
         # initialize objects of interest
-        self._create_cube()
-        mujoco_objects = np.array([self.cube])
 
         if self.include_cloth:
             self.cloth = self._create_cloth()
-            mujoco_objects = np.array([self.cube, self.cloth])
-
-        # Create placement initializer
-        if self.placement_initializer is not None:
-            self.placement_initializer.reset()
-            self.placement_initializer.add_objects(self.cube)
+            mujoco_objects = np.array([self.cloth])
         else:
-            self.placement_initializer = UniformRandomSampler(
-                name="ObjectSampler",
-                mujoco_objects=self.cube,
-                x_range=[0, 0.15],
-                y_range=[-0.2, 0.2],
-                rotation=(-np.pi/4, np.pi/4),
-                rotation_axis='z',
-                ensure_object_boundary_in_range=False,
-                ensure_valid_placement=True,
-                reference_pos=self.table_offset,
-                z_offset=0.01,
-            )
+            self._create_cube()
+            mujoco_objects = np.array([self.cube])
+
+            # Create placement initializer
+            if self.placement_initializer is not None:
+                self.placement_initializer.reset()
+                self.placement_initializer.add_objects(mujoco_objects)
+            else:
+                self.placement_initializer = UniformRandomSampler(
+                    name="ObjectSampler",
+                    mujoco_objects=mujoco_objects,
+                    x_range=[0, 0.15],
+                    y_range=[-0.2, 0.2],
+                    rotation=(-np.pi/4, np.pi/4),
+                    rotation_axis='z',
+                    ensure_object_boundary_in_range=False,
+                    ensure_valid_placement=True,
+                    reference_pos=self.table_offset,
+                    z_offset=0.01,
+                )
 
         # task includes arena, robot, and objects of interest
         self.model = ManipulationTask(
@@ -206,9 +207,11 @@ class UnfoldCloth(SingleArmEnv):
         super()._setup_references()
 
         # Additional object references from this env
-        self.cube_body_id = self.sim.model.body_name2id(self.cube.root_body)
+
         if self.include_cloth:
             self.cloth_main_id = self.sim.model.body_name2id(self.cloth.root_body)
+        else:
+            self.cube_body_id = self.sim.model.body_name2id(self.cube.root_body)
 
     def _setup_observables(self):
         """
@@ -225,25 +228,7 @@ class UnfoldCloth(SingleArmEnv):
             pf = self.robots[0].robot_model.naming_prefix
             modality = "object"
 
-            # cube-related observables
-            @sensor(modality=modality)
-            def cube_pos(obs_cache):
-                return np.array(self.sim.data.body_xpos[self.cube_body_id])
-
-            @sensor(modality=modality)
-            def cube_quat(obs_cache):
-                return np.array(self.sim.data.body_xquat[self.cube_body_id])
-
-            @sensor(modality=modality)
-            def gripper_to_cube_pos(obs_cache):
-                return (
-                    obs_cache[f"{pf}eef_pos"] - obs_cache["cube_pos"]
-                    if f"{pf}eef_pos" in obs_cache and "cube_pos" in obs_cache
-                    else np.zeros(3)
-                )
-
-            sensors = [cube_pos, cube_quat, gripper_to_cube_pos]
-
+            sensors = []
             if self.include_cloth:
                 @sensor(modality=modality)
                 def cloth_pos(obs_cache):
@@ -254,6 +239,25 @@ class UnfoldCloth(SingleArmEnv):
                     return np.array(self.sim.data.body_xquat[self.cloth_main_id])
 
                 sensors.extend([cloth_pos, cloth_quat])
+            else:
+                # cube-related observables
+                @sensor(modality=modality)
+                def cube_pos(obs_cache):
+                    return np.array(self.sim.data.body_xpos[self.cube_body_id])
+
+                @sensor(modality=modality)
+                def cube_quat(obs_cache):
+                    return np.array(self.sim.data.body_xquat[self.cube_body_id])
+
+                @sensor(modality=modality)
+                def gripper_to_cube_pos(obs_cache):
+                    return (
+                        obs_cache[f"{pf}eef_pos"] - obs_cache["cube_pos"]
+                        if f"{pf}eef_pos" in obs_cache and "cube_pos" in obs_cache
+                        else np.zeros(3)
+                    )
+
+                sensors = [cube_pos, cube_quat, gripper_to_cube_pos]
 
             names = [s.__name__ for s in sensors]
 
@@ -279,13 +283,14 @@ class UnfoldCloth(SingleArmEnv):
         # Reset all object positions using initializer sampler if we're not directly loading from an xml
         if not self.deterministic_reset:
 
-            # Sample from the placement initializer for all objects
-            object_placements = self.placement_initializer.sample()
+            if self.placement_initializer:
+                # Sample from the placement initializer for all objects
+                object_placements = self.placement_initializer.sample()
 
-            # Loop through all objects and reset their positions
-            for obj_pos, obj_quat, obj in object_placements.values():
-                if obj.joints:
-                    self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
+                # Loop through all objects and reset their positions
+                for obj_pos, obj_quat, obj in object_placements.values():
+                    if obj.joints:
+                        self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
 
 
     def visualize(self, vis_settings):
@@ -298,20 +303,21 @@ class UnfoldCloth(SingleArmEnv):
                 options specified.
         """
         # Run superclass method first
-        vis_settings["grippers"] = True
+        if not self.include_cloth:
+            vis_settings["grippers"] = True
 
-        super().visualize(vis_settings=vis_settings)
+            super().visualize(vis_settings=vis_settings)
 
-        # Color the gripper visualization site according to its distance to the cube
-        if vis_settings["grippers"]:
-            self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
+            # Color the gripper visualization site according to its distance to the cube
+            if vis_settings["grippers"]:
+                self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
     def reach(self, pick_object_pose, eef_pose):
         self.logger.info("reach")
         return self.trajectory_follower.follow(pick_object_pose, eef_pose, self.grasp_state)
 
     def lift(self, eef_pose, height=0.2):
-        self.logger.info("lift")
+        self.logger.info("lift " + ("up" if height > 0 else "down"))
         lift_pose = modern_robotics.RpToTrans(eef_pose[:-1, :-1], eef_pose[:-1, -1] + [0, 0, height])
         return self.trajectory_follower.follow(lift_pose, eef_pose, self.grasp_state)
 
