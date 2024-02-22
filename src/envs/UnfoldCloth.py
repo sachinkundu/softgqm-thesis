@@ -56,7 +56,7 @@ class UnfoldCloth(SingleArmEnv):
             asset_path=None,
             include_cloth=False,
             logger=None,
-            no_ori=False
+            headless=False
     ):
         # settings for table-top
         self.table_full_size = table_full_size
@@ -81,7 +81,7 @@ class UnfoldCloth(SingleArmEnv):
 
         self.grasp_state = -1 # Not grasping to start with
 
-        self.no_ori = no_ori
+        self.headless = headless
 
         super().__init__(
             robots=robots,
@@ -110,7 +110,7 @@ class UnfoldCloth(SingleArmEnv):
             renderer_config=renderer_config,
         )
 
-        self.trajectory_follower = TrajectoryFollower(self, self.logger, self.no_ori)
+        self.trajectory_follower = TrajectoryFollower(self, self.logger, self.headless)
 
     def reward(self, action=None):
         return 1.0
@@ -341,7 +341,8 @@ class UnfoldCloth(SingleArmEnv):
         last_obs = None
         for i in range(10):
             obs, reward, done, _  = self.step([0, 0, 0, 0, 0, 0, self.grasp_state])
-            self.render()
+            if not self.headless:
+                self.render()
             last_obs = obs
         return last_obs
 

@@ -24,8 +24,8 @@ def get_random_angle(a, b):
 @click.option('--n', default=1, show_default=True, help="number of simulation runs")
 @click.option('--debug', is_flag=True, default=False, show_default=True, help="debug logging")
 @click.option('--show-sites', is_flag=True, default=False, help="include cloth in sim")
-@click.option('--no-ori', is_flag=True, default=False, help="just position control")
-def main(cloth, n, debug, show_sites, no_ori):
+@click.option('--headless', is_flag=True, default=False, help="Run without rendering")
+def main(cloth, n, debug, show_sites, headless):
     log_level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
 
@@ -51,7 +51,7 @@ def main(cloth, n, debug, show_sites, no_ori):
     # initialize the task
     env: UnfoldCloth = suite.make(
         **options,
-        has_renderer=True,
+        has_renderer=not headless,
         has_offscreen_renderer=True,
         ignore_done=True,
         use_camera_obs=True,
@@ -61,6 +61,7 @@ def main(cloth, n, debug, show_sites, no_ori):
         camera_depths=True,
         camera_names=camera_to_use,
         camera_segmentations="element",  # {None, instance, class, element}
+        headless=headless
     )
 
     for run_no in range(n):
@@ -71,8 +72,9 @@ def main(cloth, n, debug, show_sites, no_ori):
 
         initial_state = env.reset()
 
-        agent_view_camera_id = env.sim.model.camera_name2id(camera_to_use)
-        env.viewer.set_camera(camera_id=agent_view_camera_id)
+        if not headless:
+            agent_view_camera_id = env.sim.model.camera_name2id(camera_to_use)
+            env.viewer.set_camera(camera_id=agent_view_camera_id)
 
         if show_sites:
             env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
@@ -140,7 +142,8 @@ def main(cloth, n, debug, show_sites, no_ori):
 
         for jnt in j_traj:
             env.robots[0].set_robot_joint_positions(jnt)
-            env.render()
+            if not headless:
+                env.render()
 
         cv2.waitKey(1000)
 
