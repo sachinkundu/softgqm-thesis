@@ -75,27 +75,16 @@ def main(cloth, n, debug, show_sites, headless):
         if show_sites:
             env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
 
-        if cloth:
-            # start = time.time()
-            # while time.time() < start + 60:
-            #     env.sim.forward()
-
-            pick_object_pose = tr.pos_quat_to_hmat(env.sim.data.body_xpos[env.sim.model.body_name2id("cloth_40")],
-                                                   env.sim.data.body_xquat[env.sim.model.body_name2id("cloth_40")])
-            logging.info(f"pick_object_pos: {pick_object_pose[:-1, -1]}")
-        else:
-            pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
-
-        angle = get_random_angle(-45, -30)
-        pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1],
-                                               tr.rotation_y_axis(np.array([angle]), full=False))
+        pick_object_pose = policy(cloth, env, initial_state)
 
         initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
         logging.info(f"initial_pick_pose_angle at {np.rad2deg(initial_pick_pose_angle)}")
 
-        last_obs = env.pick(pick_object_pose)
+        optimal_pick_object_pose, angle = optimal_grasp(pick_object_pose)
 
-        new_ori = make_place_from_pick_position(angle, initial_pick_pose_angle, last_obs, pick_object_pose)
+        last_obs = env.pick(optimal_pick_object_pose)
+
+        new_ori = optimal_place(angle, initial_pick_pose_angle, last_obs, pick_object_pose)
 
         last_obs = env.place(new_ori)
 
@@ -109,13 +98,34 @@ def main(cloth, n, debug, show_sites, headless):
     env.close()
 
 
-def make_place_from_pick_position(angle, initial_pick_pose_angle, last_obs, pick_object_pose):
+def optimal_grasp(pick_object_pose):
+    angle = get_random_angle(-45, -30)
+    pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1],
+                                           tr.rotation_y_axis(np.array([angle]), full=False))
+    return pick_object_pose, angle
+
+
+def policy(cloth, env, initial_state):
+    if cloth:
+        # start = time.time()
+        # while time.time() < start + 60:
+        #     env.sim.forward()
+
+        pick_object_pose = tr.pos_quat_to_hmat(env.sim.data.body_xpos[env.sim.model.body_name2id("cloth_40")],
+                                               env.sim.data.body_xquat[env.sim.model.body_name2id("cloth_40")])
+        logging.info(f"pick_object_pos: {pick_object_pose[:-1, -1]}")
+    else:
+        pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
+
+    return pick_object_pose
+
+
+def optimal_place(angle, initial_pick_pose_angle, last_obs, pick_object_pose):
     current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
     new_ori = np.matmul(tr.rotation_z_axis(np.array([-initial_pick_pose_angle]), full=True), current_eef_pose)
     new_ori = np.matmul(tr.rotation_y_axis(np.array([-angle]), full=True), new_ori)
     new_ori[:-1, -1] = pick_object_pose[:-1, -1] + np.array([0.2 * np.random.random_sample() - 0.1,
-                                                             0.2 * np.random.random_sample() - 0.1
-                                                                , 0])
+                                                             0.2 * np.random.random_sample() - 0.1, 0])
     return new_ori
 
 

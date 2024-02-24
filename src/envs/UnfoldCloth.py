@@ -324,18 +324,15 @@ class UnfoldCloth(SingleArmEnv):
 
     def pick(self, pick_pose):
         self._hover(pick_pose)
-        self._reach(pick_pose)
+        self._lift(height=-0.05)
         self._grasp()
         return self._lift()
 
     def _hover(self, pick_object_pose):
         hover_pose = pick_object_pose.copy()
         hover_pose[:-1, -1] = hover_pose[:-1, -1] + np.array([0, 0, 0.05])
-        return self._reach(hover_pose)
-
-    def _reach(self, pick_object_pose):
-        self.logger.info("reach")
-        return self.trajectory_follower.follow(pick_object_pose, self._get_current_eef_pose(), self.grasp_state)
+        return self.trajectory_follower.follow(hover_pose,
+                                               self._get_current_eef_pose(), self.grasp_state)
 
     def _lift(self, height=0.2):
         eef_pose = self._get_current_eef_pose()
