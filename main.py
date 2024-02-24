@@ -1,13 +1,9 @@
-import time
-
 import cv2
 import click
 import mujoco
 import logging
 from pathlib import Path
 import modern_robotics as mr
-import numpy as np
-
 from src.envs import UnfoldCloth
 from robosuite.utils.input_utils import *
 from robosuite.controllers import load_controller_config
@@ -47,7 +43,7 @@ def main(cloth, n, debug, show_sites, headless):
     options["controller_configs"] = controller_config
 
     # ('frontview', 'birdview', 'agentview', 'sideview', 'qdp', 'robot0_robotview', 'robot0_eye_in_hand')
-    camera_to_use = "robot0_eye_in_hand"
+    camera_to_use = "frontview"
     # initialize the task
     env: UnfoldCloth = suite.make(
         **options,
@@ -94,15 +90,12 @@ def main(cloth, n, debug, show_sites, headless):
         pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1],
                                                tr.rotation_y_axis(np.array([angle]), full=False))
 
-        hover_pose = pick_object_pose.copy()
-        hover_pose[:-1, -1] = hover_pose[:-1, -1] + np.array([0, 0, 0.05])
-
         eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
 
         initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
         logging.info(f"initial_pick_pose_angle at {np.rad2deg(initial_pick_pose_angle)}")
 
-        last_obs = env.reach(hover_pose, eef_pose)
+        last_obs = env.hover(pick_object_pose)
 
         last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']), height=-0.05)
 

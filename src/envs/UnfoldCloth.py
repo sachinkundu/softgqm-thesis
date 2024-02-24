@@ -1,19 +1,21 @@
-import modern_robotics
-import mujoco
 import numpy as np
 from pathlib import Path
 from collections import OrderedDict
 
+from typing import List
+
 from robosuite.models.arenas import TableArena
-from robosuite.models.objects import BoxObject
+import robosuite.utils.transform_utils as rtu
 from robosuite.models.tasks import ManipulationTask
 from robosuite.utils.mjcf_utils import CustomMaterial
 from robosuite.utils.observables import Observable, sensor
+from robosuite.models.objects import BoxObject, MujocoObject
 from robosuite.utils.placement_samplers import UniformRandomSampler
 from robosuite.environments.manipulation.single_arm_env import SingleArmEnv
 
 from src.ClothObject import ClothObject
 from src.trajectory_follower import TrajectoryFollower
+
 from dm_robotics.transformations import transformations as tr
 
 
@@ -73,15 +75,13 @@ class UnfoldCloth(SingleArmEnv):
         # object placement initializer
         self.placement_initializer = placement_initializer
 
+        #
         self.asset_path = asset_path
-
         self.include_cloth = include_cloth
-
         self.logger = logger
-
-        self.grasp_state = -1 # Not grasping to start with
-
+        self.grasp_state = -1  # Not grasping to start with
         self.headless = headless
+        self.last_obs = None
 
         super().__init__(
             robots=robots,
@@ -115,7 +115,7 @@ class UnfoldCloth(SingleArmEnv):
     def reward(self, action=None):
         return 1.0
 
-    def _create_cube(self):
+    def _create_cube(self) -> MujocoObject:
         tex_attrib = {
             "type": "cube",
         }
@@ -141,7 +141,7 @@ class UnfoldCloth(SingleArmEnv):
             material=redwood,
         )
 
-    def _create_cloth(self):
+    def _create_cloth(self) -> MujocoObject:
         return ClothObject(str((Path(self.asset_path) / "cloth_4.xml").resolve()), "cloth")
 
     def _load_model(self):
@@ -154,7 +154,7 @@ class UnfoldCloth(SingleArmEnv):
         xpos = self.robots[0].robot_model.base_xpos_offset["table"](self.table_full_size[0])
         self.robots[0].robot_model.set_base_xpos(xpos)
 
-        # load model for table top workspace
+        # load model for table-top workspace
         mujoco_arena = TableArena(
             table_full_size=self.table_full_size,
             table_friction=self.table_friction,
@@ -168,10 +168,10 @@ class UnfoldCloth(SingleArmEnv):
 
         if self.include_cloth:
             self.cloth = self._create_cloth()
-            mujoco_objects = np.array([self.cloth])
+            mujoco_objects: List[MujocoObject] = np.array([self.cloth])
         else:
             self._create_cube()
-            mujoco_objects = np.array([self.cube])
+            mujoco_objects: List[MujocoObject] = np.array([self.cube])
 
             # Create placement initializer
             if self.placement_initializer is not None:
@@ -183,7 +183,7 @@ class UnfoldCloth(SingleArmEnv):
                     mujoco_objects=mujoco_objects,
                     x_range=[0, 0.15],
                     y_range=[-0.2, 0.2],
-                    rotation=(-np.pi/4, np.pi/4),
+                    rotation=(-np.pi / 4, np.pi / 4),
                     rotation_axis='z',
                     ensure_object_boundary_in_range=False,
                     ensure_valid_placement=True,
@@ -197,6 +197,10 @@ class UnfoldCloth(SingleArmEnv):
             mujoco_robots=[robot.robot_model for robot in self.robots],
             mujoco_objects=mujoco_objects
         )
+
+    def reset(self):
+        self.last_obs = super().reset()
+        return self.last_obs
 
     def _setup_references(self):
         """
@@ -276,7 +280,7 @@ class UnfoldCloth(SingleArmEnv):
         Resets simulation internal configurations.
         """
 
-        self.grasp_state = -1 # Not grasping to start with
+        self.grasp_state = -1  # Not grasping to start with
 
         super()._reset_internal()
 
@@ -290,8 +294,8 @@ class UnfoldCloth(SingleArmEnv):
                 # Loop through all objects and reset their positions
                 for obj_pos, obj_quat, obj in object_placements.values():
                     if obj.joints:
-                        self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
-
+                        self.sim.data.set_joint_qpos(obj.joints[0],
+                                                     np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
 
     def visualize(self, vis_settings):
         """
@@ -312,13 +316,23 @@ class UnfoldCloth(SingleArmEnv):
             if vis_settings["grippers"]:
                 self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
+    def _get_current_eef_pose(self):
+        current_obs = self._get_observations()
+        return tr.pos_quat_to_hmat(current_obs['robot0_eef_pos'],
+                                   current_obs['robot0_eef_quat'])
+
+    def hover(self, pick_object_pose):
+        hover_pose = pick_object_pose.copy()
+        hover_pose[:-1, -1] = hover_pose[:-1, -1] + np.array([0, 0, 0.05])
+        return self.reach(hover_pose, self._get_current_eef_pose())
+
     def reach(self, pick_object_pose, eef_pose):
         self.logger.info("reach")
         return self.trajectory_follower.follow(pick_object_pose, eef_pose, self.grasp_state)
 
     def lift(self, eef_pose, height=0.2):
         self.logger.info("lift " + ("up" if height > 0 else "down"))
-        lift_pose = modern_robotics.RpToTrans(eef_pose[:-1, :-1], eef_pose[:-1, -1] + [0, 0, height])
+        lift_pose = rtu.make_pose(eef_pose[:-1, -1] + [0, 0, height], eef_pose[:-1, :-1])
         return self.trajectory_follower.follow(lift_pose, eef_pose, self.grasp_state)
 
     def place(self, place_hmat, eef_init_pose, angle_rotate=0):
@@ -340,7 +354,7 @@ class UnfoldCloth(SingleArmEnv):
     def _grasp_imp(self):
         last_obs = None
         for i in range(10):
-            obs, reward, done, _  = self.step([0, 0, 0, 0, 0, 0, self.grasp_state])
+            obs, reward, done, _ = self.step([0, 0, 0, 0, 0, 0, self.grasp_state])
             if not self.headless:
                 self.render()
             last_obs = obs
@@ -356,5 +370,5 @@ class UnfoldCloth(SingleArmEnv):
         cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
         table_height = self.model.mujoco_arena.table_offset[2]
 
-        # cube is higher than the table top above a margin
+        # cube is higher than the table-top above a margin
         return cube_height > table_height + 0.04
