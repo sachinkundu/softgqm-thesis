@@ -321,16 +321,23 @@ class UnfoldCloth(SingleArmEnv):
         return tr.pos_quat_to_hmat(current_obs['robot0_eef_pos'],
                                    current_obs['robot0_eef_quat'])
 
-    def hover(self, pick_object_pose):
+    def pick(self, pick_pose):
+        self._hover(pick_pose)
+        self._reach(pick_pose)
+        self._grasp()
+        return self._lift()
+
+    def _hover(self, pick_object_pose):
         hover_pose = pick_object_pose.copy()
         hover_pose[:-1, -1] = hover_pose[:-1, -1] + np.array([0, 0, 0.05])
-        return self.reach(hover_pose, self._get_current_eef_pose())
+        return self._reach(hover_pose)
 
-    def reach(self, pick_object_pose, eef_pose):
+    def _reach(self, pick_object_pose):
         self.logger.info("reach")
-        return self.trajectory_follower.follow(pick_object_pose, eef_pose, self.grasp_state)
+        return self.trajectory_follower.follow(pick_object_pose, self._get_current_eef_pose(), self.grasp_state)
 
-    def lift(self, eef_pose, height=0.2):
+    def _lift(self, height=0.2):
+        eef_pose = self._get_current_eef_pose()
         self.logger.info("lift " + ("up" if height > 0 else "down"))
         lift_pose = rtu.make_pose(eef_pose[:-1, -1] + [0, 0, height], eef_pose[:-1, :-1])
         return self.trajectory_follower.follow(lift_pose, eef_pose, self.grasp_state)
@@ -343,7 +350,7 @@ class UnfoldCloth(SingleArmEnv):
         self.logger.info("home")
         return self.trajectory_follower.follow(home_hmat, eef_init_pose, self.grasp_state)
 
-    def grasp(self):
+    def _grasp(self):
         self.grasp_state = 1
         return self._grasp_imp()
 

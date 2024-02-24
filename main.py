@@ -90,25 +90,11 @@ def main(cloth, n, debug, show_sites, headless):
         pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1],
                                                tr.rotation_y_axis(np.array([angle]), full=False))
 
-        eef_pose = tr.pos_quat_to_hmat(initial_state['robot0_eef_pos'], initial_state['robot0_eef_quat'])
-
         initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
         logging.info(f"initial_pick_pose_angle at {np.rad2deg(initial_pick_pose_angle)}")
 
-        last_obs = env.hover(pick_object_pose)
-
-        last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']), height=-0.05)
-
-        last_obs = env.grasp()
-
-        if not cloth:
-            logging.info(f"cube before lifting at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
-
-        last_obs = env.lift(tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat']))
-
-        if not cloth:
-            logging.info(f"cube angle at {np.rad2deg(tr.quat_angle(last_obs['cube_quat']))}")
-
+        last_obs = env.pick(pick_object_pose)
+        
         current_eef_pose = tr.pos_quat_to_hmat(last_obs['robot0_eef_pos'], last_obs['robot0_eef_quat'])
 
         current_eef_angle = tr.quat_angle(last_obs['robot0_eef_quat'])
