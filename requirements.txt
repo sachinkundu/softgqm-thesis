@@ -1,0 +1,4 @@
+click==8.1.7
+modern-robotics==1.1.1
+dm-robotics-transformations==0.6.0
+matplotlib==3.7.4

@@ -47,7 +47,7 @@ def main(cloth, n, debug, show_sites, headless):
     options["controller_configs"] = controller_config
 
     # ('frontview', 'birdview', 'agentview', 'sideview', 'qdp', 'robot0_robotview', 'robot0_eye_in_hand')
-    camera_to_use = "agentview"
+    camera_to_use = "robot0_eye_in_hand"
     # initialize the task
     env: UnfoldCloth = suite.make(
         **options,
