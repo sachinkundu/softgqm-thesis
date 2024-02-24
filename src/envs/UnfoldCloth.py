@@ -4,6 +4,7 @@ from collections import OrderedDict
 
 from typing import List
 
+import modern_robotics as mr
 from robosuite.models.arenas import TableArena
 import robosuite.utils.transform_utils as rtu
 from robosuite.models.tasks import ManipulationTask
@@ -342,9 +343,20 @@ class UnfoldCloth(SingleArmEnv):
         lift_pose = rtu.make_pose(eef_pose[:-1, -1] + [0, 0, height], eef_pose[:-1, :-1])
         return self.trajectory_follower.follow(lift_pose, eef_pose, self.grasp_state)
 
-    def place(self, place_hmat, eef_init_pose, angle_rotate=0):
+    def place(self, place_hmat):
+        eef_init_pose = self._get_current_eef_pose()
         self.logger.info("place")
-        return self.trajectory_follower.follow(place_hmat, eef_init_pose, self.grasp_state, angle_rotate)
+        last_obs = self.trajectory_follower.follow(place_hmat, eef_init_pose, self.grasp_state)
+        self._ungrasp()
+        return last_obs
+
+    def go_home(self):
+        j_traj = mr.JointTrajectory(self.robots[0].recent_qpos.current,
+                                    self.robots[0].init_qpos, 5, 100, 5)
+        for jnt in j_traj:
+            self.robots[0].set_robot_joint_positions(jnt)
+            if not self.headless:
+                self.render()
 
     def home(self, home_hmat, eef_init_pose):
         self.logger.info("home")
@@ -354,7 +366,7 @@ class UnfoldCloth(SingleArmEnv):
         self.grasp_state = 1
         return self._grasp_imp()
 
-    def ungrasp(self):
+    def _ungrasp(self):
         self.grasp_state = -1
         return self._grasp_imp()
 
