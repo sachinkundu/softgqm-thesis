@@ -1,8 +1,7 @@
 # Get image
 from matplotlib import pyplot as plt
 obs = initial_state
-camera_name = "robot0_eye_in_hand"
-plt.imshow(obs[f"{camera_name}_image"])
+plt.imshow(obs[f"{camera_to_use}_image"])
 plt.show()
 
 # Get depth
@@ -16,7 +15,11 @@ plt.show()
 from matplotlib import pyplot as plt
 obs = initial_state
 camera_name = "robot0_eye_in_hand"
-for klass in np.unique(obs[f"{camera_name}_segmentation_element"]):
+for klass in np.unique(obs[f"{camera_name}_segmentation_element"]):from matplotlib import pyplot as plt
+obs = initial_state
+plt.imshow(obs[f"{camera_to_use}_image"])
+plt.show()
+
     reshaped_img = obs[f"{camera_name}_image"].copy().reshape(256*256, 3)
     segmentation_img = obs[f"{camera_name}_segmentation_element"].flatten()
     class_0_indices = segmentation_img == klass
@@ -28,7 +31,7 @@ from matplotlib import pyplot as plt
 obs = initial_state
 fig, ax = plt.subplots(1, 1)
 ax.imshow(obs[f"{camera_to_use}_image"])
-ax.plot(obj_pixel[1], 256-obj_pixel[0], '+')
+ax.plot(obj_pixel[1], 256-obj_pixel[0], '+', mew=10, ms=20)
 plt.show()
 
 # Transform from world -> pixel -> world
@@ -77,3 +80,27 @@ print("pixel: {}".format(obj_pixel))
 print("obj pos: {}".format(obj_pos))
 print("estimated obj pos: {}".format(estimated_obj_pos))
 print("z err: {}".format(z_err))
+
+
+# Plot crosshair on pick position
+world_to_camera = CU.get_camera_transform_matrix(
+    sim=env.sim,
+    camera_name=camera_to_use,
+    camera_height=env.camera_heights[0],
+    camera_width=env.camera_widths[0],
+)
+
+obj_pixel = CU.project_points_from_world_to_camera(
+    points=cloth_body_pos,
+    world_to_camera_transform=world_to_camera,
+    camera_height=env.camera_heights[0],
+    camera_width=env.camera_widths[0],
+)
+
+# Plot cross hair on the image
+from matplotlib import pyplot as plt
+obs = initial_state
+fig, ax = plt.subplots(1, 1)
+ax.imshow(obs[f"{camera_to_use}_image"])
+ax.plot(obj_pixel[1], 256-obj_pixel[0], '+', mew=10, ms=20)
+plt.show()

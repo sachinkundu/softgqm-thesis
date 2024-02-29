@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mujoco model="cloth">
 	<compiler angle="radian"></compiler>
-	<option timestep="0.01" tolerance="1e-06" viscosity="0.3" integrator="implicitfast" solver="CG"></option>
+	<option timestep="0.001" tolerance="1e-06" viscosity="0.3" integrator="implicitfast" solver="CG"></option>
 	<extension>
 		<plugin plugin="mujoco.elasticity.shell">
 			<instance name="cloth_flexcomp_cloth">
@@ -1431,6 +1431,6 @@
 		</flex>
 	</deformable>
 	<equality>
-		<flex flex="cloth_cloth"></flex>
+		<flex flex="cloth"></flex>
 	</equality>
 </mujoco>

@@ -31,11 +31,11 @@ class TrajectoryFollower:
     def __init__(self, env, logger, headless=False):
         self.env = env
         self.logger = logger
-        self.p_gain = 12
-        self.ang_gain = 2.1
+        self.p_gain = 20
+        self.ang_gain = 2.8
         self.headless = headless
 
-    def follow(self, destination_hmat, eef_init_pose, grasp_action, angle_rotate=0):
+    def follow(self, destination_hmat, eef_init_pose, grasp_action):
         trajectory = _calculate_trajectory(destination_hmat, eef_init_pose)
 
         last_obs = None

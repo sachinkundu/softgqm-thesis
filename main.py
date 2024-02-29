@@ -1,13 +1,20 @@
+import math
+
 import cv2
+import time
 import click
 import mujoco
 import logging
 from pathlib import Path
 import modern_robotics as mr
+import numpy as np
+import robosuite.utils.transform_utils as rsu
 from src.envs import UnfoldCloth
 from robosuite.utils.input_utils import *
 from robosuite.controllers import load_controller_config
 from dm_robotics.transformations import transformations as tr
+
+import robosuite.utils.camera_utils as CU
 
 
 def get_random_angle(a, b):
@@ -43,7 +50,7 @@ def main(cloth, n, debug, show_sites, headless):
     options["controller_configs"] = controller_config
 
     # ('frontview', 'birdview', 'agentview', 'sideview', 'qdp', 'robot0_robotview', 'robot0_eye_in_hand')
-    camera_to_use = "frontview"
+    camera_to_use = "robot0_robotview"
     # initialize the task
     env: UnfoldCloth = suite.make(
         **options,
@@ -71,25 +78,53 @@ def main(cloth, n, debug, show_sites, headless):
         if not headless:
             agent_view_camera_id = env.sim.model.camera_name2id(camera_to_use)
             env.viewer.set_camera(camera_id=agent_view_camera_id)
+            env.render()
 
         if show_sites:
             env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
 
-        pick_object_pose = policy(cloth, env, initial_state)
+        if not cloth:
+            pick_object_pose = rsu.make_pose(pixels_to_world(fake_policy(initial_state,
+                                                                         camera_to_use, env, cloth, headless),
+                                                             initial_state, camera_to_use, env),
+                                             tr.quat_to_mat(initial_state["cube_quat"])[:-1, :-1])
+        else:
 
-        initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
-        logging.info(f"initial_pick_pose_angle at {np.rad2deg(initial_pick_pose_angle)}")
+            cloth_id = get_highest_cloth_body(env)
+            cloth_body_pos = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
+            cloth_body_quat = env.sim.data.body_xquat[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
+
+            logging.info(f"cloth_body_pos before settling: {cloth_body_pos}")
+
+            start = time.time()
+            while time.time() < start + 1:
+                action = np.zeros(shape=(env.action_dim, ))
+                action[-1] = -1
+                env.step(action)
+                if not headless:
+                    env.render()
+
+            logging.info(f"cloth_body_pos after settling: {cloth_body_pos}")
+
+            env.set_cloth_body_id(cloth_id)
+
+            pick_object_pose = rsu.make_pose(cloth_body_pos, tr.quat_to_mat(cloth_body_quat)[:-1, :-1])
 
         optimal_pick_object_pose, angle = optimal_grasp(pick_object_pose)
+        last_obs, success = env.pick(optimal_pick_object_pose)
 
-        last_obs = env.pick(optimal_pick_object_pose)
+        if success:
+            initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
+            new_ori = optimal_place(angle, initial_pick_pose_angle, last_obs, pick_object_pose)
 
-        new_ori = optimal_place(angle, initial_pick_pose_angle, last_obs, pick_object_pose)
+            last_obs, reward = env.place(new_ori)
 
-        last_obs = env.place(new_ori)
+            logging.info(f"Reward: {reward}")
 
-        if not cloth:
-            logging.info(f"cube angle at {np.rad2deg(tr.quat_to_euler(last_obs['cube_quat']))}")
+            if not cloth:
+                logging.info(f"cube angle at {np.rad2deg(tr.quat_to_euler(last_obs['cube_quat']))}")
+        else:
+            logging.error("Failed to grasp. This run will not do anything")
 
         env.go_home()
 
@@ -101,23 +136,91 @@ def main(cloth, n, debug, show_sites, headless):
 def optimal_grasp(pick_object_pose):
     angle = get_random_angle(-45, -30)
     pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1],
-                                           tr.rotation_y_axis(np.array([angle]), full=False))
+                                           tr.rotation_y_axis(np.array([0]), full=False))
     return pick_object_pose, angle
 
 
-def policy(cloth, env, initial_state):
-    if cloth:
-        # start = time.time()
-        # while time.time() < start + 60:
-        #     env.sim.forward()
+def pixels_to_world(pixels, state, camera_name, env):
+    depth_map = state["{}_depth".format(camera_name)][::-1]
+    world_to_camera = CU.get_camera_transform_matrix(
+        sim=env.sim,
+        camera_name=camera_name,
+        camera_height=env.camera_heights[0],
+        camera_width=env.camera_widths[0],
+    )
+    camera_to_world = np.linalg.inv(world_to_camera)
 
-        pick_object_pose = tr.pos_quat_to_hmat(env.sim.data.body_xpos[env.sim.model.body_name2id("cloth_40")],
-                                               env.sim.data.body_xquat[env.sim.model.body_name2id("cloth_40")])
+    depth_map = CU.get_real_depth_map(sim=env.sim, depth_map=depth_map)
+    estimated_obj_pos = CU.transform_from_pixels_to_world(
+        pixels=pixels,
+        depth_map=depth_map,
+        camera_to_world_transform=camera_to_world,
+    )
+    logging.info(f"estimated_obj_pos: {estimated_obj_pos}")
+    return estimated_obj_pos
+
+
+def fake_policy(state, camera_to_use, env, cloth, headless):
+    obj_pos = policy(cloth, env, state, headless)
+    world_to_camera = CU.get_camera_transform_matrix(
+        sim=env.sim,
+        camera_name=camera_to_use,
+        camera_height=env.camera_heights[0],
+        camera_width=env.camera_widths[0],
+    )
+
+    # transform object position into camera pixel
+    obj_pixel = CU.project_points_from_world_to_camera(
+        points=obj_pos,
+        world_to_camera_transform=world_to_camera,
+        camera_height=env.camera_heights[0],
+        camera_width=env.camera_widths[0],
+    )
+
+    return np.array([125, 200]) if cloth else obj_pixel
+
+
+def get_highest_cloth_body(env):
+    highest_height = 0.0
+    highest_body = None
+
+    for i in range(25):
+        current_cloth_body_height = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{i}")][2]
+        if current_cloth_body_height > highest_height:
+            highest_height = current_cloth_body_height
+            highest_body = i
+
+    return highest_body
+
+
+def get_nearest_body_to_pixel(pixels, state, camera_name, env):
+    coordinates = pixels_to_world(pixels, state, camera_name, env)
+    nearest_body_idx = None
+    closest_distance = math.inf
+    for i_body in range(200):
+        current_cloth_body_pos = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{i_body}")]
+        current_distance = np.linalg.norm(coordinates - current_cloth_body_pos)
+        if current_distance < closest_distance:
+            closest_distance = current_distance
+            nearest_body_idx = i_body
+
+    return nearest_body_idx
+
+
+def policy(cloth, env, initial_state, headless):
+    if cloth:
+        start = time.time()
+        while time.time() < start + 60:
+            env.sim.forward()
+            if not headless:
+                env.render()
+
+        pick_object_pose = tr.pos_quat_to_hmat(initial_state['cloth_pos'], initial_state['cloth_quat'])
         logging.info(f"pick_object_pos: {pick_object_pose[:-1, -1]}")
     else:
         pick_object_pose = tr.pos_quat_to_hmat(initial_state['cube_pos'], initial_state['cube_quat'])
 
-    return pick_object_pose
+    return pick_object_pose[:-1, -1]
 
 
 def optimal_place(angle, initial_pick_pose_angle, last_obs, pick_object_pose):

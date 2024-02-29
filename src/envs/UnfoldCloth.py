@@ -83,6 +83,8 @@ class UnfoldCloth(SingleArmEnv):
         self.grasp_state = -1  # Not grasping to start with
         self.headless = headless
         self.last_obs = None
+        self.cloth_body_id = None
+        self.done = False
 
         super().__init__(
             robots=robots,
@@ -113,8 +115,24 @@ class UnfoldCloth(SingleArmEnv):
 
         self.trajectory_follower = TrajectoryFollower(self, self.logger, self.headless)
 
+    def set_cloth_body_id(self, body_id):
+        self.cloth_body_id = body_id
+
     def reward(self, action=None):
-        return 1.0
+        if self.include_cloth:
+            if self.done:
+                bottom_left = self.sim.data.body_xpos[self.sim.model.body_name2id(f"cloth_{self.cloth_corner_vertices[0]}")]
+                top_left = self.sim.data.body_xpos[self.sim.model.body_name2id(f"cloth_{self.cloth_corner_vertices[1]}")]
+                bottom_right = self.sim.data.body_xpos[
+                    self.sim.model.body_name2id(f"cloth_{self.cloth_corner_vertices[2]}")]
+                l1 = np.linalg.norm(bottom_left - top_left)
+                l2 = np.linalg.norm(bottom_left - bottom_right)
+                r = np.round(l1 * l2 * 1000, decimals=2)
+                return r    # Area of a rectangular cloth is the reward - in mm
+            else:
+                return 0
+        else:
+            return 1.0
 
     def _create_cube(self) -> MujocoObject:
         tex_attrib = {
@@ -143,7 +161,8 @@ class UnfoldCloth(SingleArmEnv):
         )
 
     def _create_cloth(self) -> MujocoObject:
-        return ClothObject(str((Path(self.asset_path) / "cloth_4.xml").resolve()), "cloth")
+        self.cloth_corner_vertices = np.array([0, 4, 20, 24])
+        return ClothObject(str((Path(self.asset_path) / "cloth_small_baked.xml").resolve()), "cloth")
 
     def _load_model(self):
         """
@@ -212,10 +231,7 @@ class UnfoldCloth(SingleArmEnv):
         super()._setup_references()
 
         # Additional object references from this env
-
-        if self.include_cloth:
-            self.cloth_main_id = self.sim.model.body_name2id(self.cloth.root_body)
-        else:
+        if not self.include_cloth:
             self.cube_body_id = self.sim.model.body_name2id(self.cube.root_body)
 
     def _setup_observables(self):
@@ -237,11 +253,11 @@ class UnfoldCloth(SingleArmEnv):
             if self.include_cloth:
                 @sensor(modality=modality)
                 def cloth_pos(obs_cache):
-                    return np.array(self.sim.data.body_xpos[self.cloth_main_id])
+                    return np.array(self.sim.data.body_xpos[self.cloth_body_id])
 
                 @sensor(modality=modality)
                 def cloth_quat(obs_cache):
-                    return np.array(self.sim.data.body_xquat[self.cloth_main_id])
+                    return np.array(self.sim.data.body_xquat[self.cloth_body_id])
 
                 sensors.extend([cloth_pos, cloth_quat])
             else:
@@ -282,6 +298,7 @@ class UnfoldCloth(SingleArmEnv):
         """
 
         self.grasp_state = -1  # Not grasping to start with
+        self.done = False
 
         super()._reset_internal()
 
@@ -317,16 +334,41 @@ class UnfoldCloth(SingleArmEnv):
             if vis_settings["grippers"]:
                 self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
-    def _get_current_eef_pose(self):
-        current_obs = self._get_observations()
-        return tr.pos_quat_to_hmat(current_obs['robot0_eef_pos'],
-                                   current_obs['robot0_eef_quat'])
-
     def pick(self, pick_pose):
+        """
+        Pick the object at pick pose, can fail to grasp. Let the caller know so they can decide what to do.
+        """
+        self.done = False
         self._hover(pick_pose)
-        self._lift(height=-0.05)
+        if self.include_cloth:
+            self.logger.info(f"eef_pos after hover: {self._get_observations()['robot0_eef_pos']}")
+            self.logger.info(f"cloth_body_pos after hover: {self.sim.data.body_xpos[self.cloth_body_id]}")
+        self._lift(height=-0.07)
+        if self.include_cloth:
+            self.logger.info(f"eef_pos after lift down: {self._get_observations()['robot0_eef_pos']}")
+            self.logger.info(f"cloth_body_pos after lift down: {self.sim.data.body_xpos[self.cloth_body_id]}")
         self._grasp()
-        return self._lift()
+        last_obs = self._lift()
+        if self._check_success():
+            return last_obs, True
+        else:
+            return None, False
+
+    def place(self, place_hmat):
+        eef_init_pose = self._get_current_eef_pose()
+        self.logger.info("place")
+        last_obs = self.trajectory_follower.follow(place_hmat, eef_init_pose, self.grasp_state)
+        self._ungrasp()
+        self.done = True
+        return last_obs, self.reward()
+
+    def go_home(self):
+        j_traj = mr.JointTrajectory(self.robots[0].recent_qpos.current,
+                                    self.robots[0].init_qpos, 5, 100, 5)
+        for jnt in j_traj:
+            self.robots[0].set_robot_joint_positions(jnt)
+            if not self.headless:
+                self.render()
 
     def _hover(self, pick_object_pose):
         hover_pose = pick_object_pose.copy()
@@ -339,25 +381,6 @@ class UnfoldCloth(SingleArmEnv):
         self.logger.info("lift " + ("up" if height > 0 else "down"))
         lift_pose = rtu.make_pose(eef_pose[:-1, -1] + [0, 0, height], eef_pose[:-1, :-1])
         return self.trajectory_follower.follow(lift_pose, eef_pose, self.grasp_state)
-
-    def place(self, place_hmat):
-        eef_init_pose = self._get_current_eef_pose()
-        self.logger.info("place")
-        last_obs = self.trajectory_follower.follow(place_hmat, eef_init_pose, self.grasp_state)
-        self._ungrasp()
-        return last_obs
-
-    def go_home(self):
-        j_traj = mr.JointTrajectory(self.robots[0].recent_qpos.current,
-                                    self.robots[0].init_qpos, 5, 100, 5)
-        for jnt in j_traj:
-            self.robots[0].set_robot_joint_positions(jnt)
-            if not self.headless:
-                self.render()
-
-    def home(self, home_hmat, eef_init_pose):
-        self.logger.info("home")
-        return self.trajectory_follower.follow(home_hmat, eef_init_pose, self.grasp_state)
 
     def _grasp(self):
         self.grasp_state = 1
@@ -383,8 +406,17 @@ class UnfoldCloth(SingleArmEnv):
         Returns:
             bool: True if cube has been lifted
         """
-        cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
+        object_height = 0.0
+        if not self.include_cloth:
+            object_height = self.sim.data.body_xpos[self.cube_body_id][2]
+        else:
+            object_height = self.sim.data.body_xpos[self.cloth_body_id][2]
         table_height = self.model.mujoco_arena.table_offset[2]
 
         # cube is higher than the table-top above a margin
-        return cube_height > table_height + 0.04
+        return object_height > table_height + 0.04
+
+    def _get_current_eef_pose(self):
+        current_obs = self._get_observations()
+        return tr.pos_quat_to_hmat(current_obs['robot0_eef_pos'],
+                                   current_obs['robot0_eef_quat'])
