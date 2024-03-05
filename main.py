@@ -28,7 +28,8 @@ def get_random_angle(a, b):
 @click.option('--debug', is_flag=True, default=False, show_default=True, help="debug logging")
 @click.option('--show-sites', is_flag=True, default=False, help="include cloth in sim")
 @click.option('--headless', is_flag=True, default=False, help="Run without rendering")
-def main(cloth, n, debug, show_sites, headless):
+@click.option('--label', is_flag=True, default=False, help="Show body labels")
+def main(cloth, n, debug, show_sites, headless, label):
     log_level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
 
@@ -67,70 +68,72 @@ def main(cloth, n, debug, show_sites, headless):
         headless=headless
     )
 
-    for run_no in range(n):
+    try:
+        for run_no in range(n):
 
-        logging.info("############################")
-        logging.info(f"Trial No: {run_no + 1}")
-        logging.info("############################")
+            logging.info("############################")
+            logging.info(f"Trial No: {run_no + 1}")
+            logging.info("############################")
 
-        initial_state = env.reset()
+            initial_state = env.reset()
 
-        if not headless:
-            agent_view_camera_id = env.sim.model.camera_name2id(camera_to_use)
-            env.viewer.set_camera(camera_id=agent_view_camera_id)
-            env.render()
+            if not headless:
+                agent_view_camera_id = env.sim.model.camera_name2id(camera_to_use)
+                env.viewer.set_camera(camera_id=agent_view_camera_id)
+                env.render()
 
-        if show_sites:
-            env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
+            if show_sites:
+                env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
 
-        if not cloth:
-            pick_object_pose = rsu.make_pose(pixels_to_world(fake_policy(initial_state,
-                                                                         camera_to_use, env, cloth, headless),
-                                                             initial_state, camera_to_use, env),
-                                             tr.quat_to_mat(initial_state["cube_quat"])[:-1, :-1])
-        else:
-
-            cloth_id = get_highest_cloth_body(env)
-            cloth_body_pos = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
-            cloth_body_quat = env.sim.data.body_xquat[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
-
-            logging.info(f"cloth_body_pos before settling: {cloth_body_pos}")
-
-            start = time.time()
-            while time.time() < start + 1:
-                action = np.zeros(shape=(env.action_dim, ))
-                action[-1] = -1
-                env.step(action)
-                if not headless:
-                    env.render()
-
-            logging.info(f"cloth_body_pos after settling: {cloth_body_pos}")
-
-            env.set_cloth_body_id(cloth_id)
-
-            pick_object_pose = rsu.make_pose(cloth_body_pos, tr.quat_to_mat(cloth_body_quat)[:-1, :-1])
-
-        optimal_pick_object_pose, angle = optimal_grasp(pick_object_pose)
-        last_obs, success = env.pick(optimal_pick_object_pose)
-
-        if success:
-            initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
-            new_ori = optimal_place(angle, initial_pick_pose_angle, last_obs, pick_object_pose)
-
-            last_obs, reward = env.place(new_ori)
-
-            logging.info(f"Reward: {reward}")
+            if label:
+                env.sim._render_context_offscreen.vopt.label = mujoco.mjtLabel.mjLABEL_BODY
 
             if not cloth:
-                logging.info(f"cube angle at {np.rad2deg(tr.quat_to_euler(last_obs['cube_quat']))}")
-        else:
-            logging.error("Failed to grasp. This run will not do anything")
+                pick_object_pose = rsu.make_pose(pixels_to_world(fake_policy(initial_state,
+                                                                             camera_to_use, env, cloth, headless),
+                                                                 initial_state, camera_to_use, env),
+                                                 tr.quat_to_mat(initial_state["cube_quat"])[:-1, :-1])
+            else:
 
-        env.go_home()
+                start = time.time()
+                while time.time() < start + 120:
+                    action = np.zeros(shape=(env.action_dim, ))
+                    action[-1] = -1
+                    env.step(action)
+                    if not headless:
+                        env.render()
 
-        cv2.waitKey(1000)
+                cloth_id = get_highest_cloth_body(env)
+                cloth_body_pos = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
+                cloth_body_quat = env.sim.data.body_xquat[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
 
-    env.close()
+                logging.info(f"cloth_body_pos after settling: {cloth_body_pos}")
+
+                env.set_cloth_body_id(cloth_id)
+
+                pick_object_pose = rsu.make_pose(cloth_body_pos, tr.quat_to_mat(cloth_body_quat)[:-1, :-1])
+
+            optimal_pick_object_pose, angle = optimal_grasp(pick_object_pose)
+            last_obs, success = env.pick(optimal_pick_object_pose)
+
+            if success:
+                initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
+                new_ori = optimal_place(angle, initial_pick_pose_angle, last_obs, pick_object_pose)
+
+                last_obs, reward = env.place(new_ori)
+
+                logging.info(f"Reward: {reward}")
+
+                if not cloth:
+                    logging.info(f"cube angle at {np.rad2deg(tr.quat_to_euler(last_obs['cube_quat']))}")
+            else:
+                logging.error("Failed to grasp. This run will not do anything")
+
+            env.go_home()
+
+            cv2.waitKey(1000)
+    finally:
+        env.close()
 
 
 def optimal_grasp(pick_object_pose):
@@ -186,6 +189,7 @@ def get_highest_cloth_body(env):
 
     for i in range(25):
         current_cloth_body_height = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{i}")][2]
+        logging.info(f"highest_height: {current_cloth_body_height}, i: {i} , highest_body: {highest_body}")
         if current_cloth_body_height > highest_height:
             highest_height = current_cloth_body_height
             highest_body = i

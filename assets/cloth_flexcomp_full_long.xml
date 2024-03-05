@@ -1,5 +1,5 @@
 <mujoco model="cloth">
-    <option timestep="0.01" integrator="implicitfast" viscosity="0.3" solver="CG" tolerance="1e-6"/>
+    <option timestep="0.01" integrator="implicitfast" viscosity="0.3" solver="CG" tolerance="1e-6" noslip_iterations="10"/>
 
     <extension>
         <plugin plugin="mujoco.elasticity.shell"/>
@@ -16,8 +16,8 @@
         <light diffuse=".6 .6 .6" specular="0.2 0.2 0.2" pos="0 0 4" dir="0 0 -1"/>
         <body>
             <body name="object" pos="0 0 0.1">
-                <flexcomp type="grid" count="20 10 1" spacing=".0125 .0125 .0125" mass="0.5"
-                          name="cloth" radius="0.006">
+                <flexcomp type="grid" count="20 10 1" spacing=".05 .05 .05" mass="0.5"
+                          name="cloth" radius="0.001">
                      <contact condim="3" solref="0.01 1" solimp=".95 .99 .0001" selfcollide="none"/>
                     <edge equality="true" damping="1.0"/>
                     <plugin plugin="mujoco.elasticity.shell">

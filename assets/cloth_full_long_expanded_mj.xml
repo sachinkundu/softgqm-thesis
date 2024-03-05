@@ -1,0 +1,1456 @@
+<mujoco model="cloth">
+  <compiler angle="radian"/>
+  <option timestep="0.01" tolerance="1e-06" viscosity="0.3" integrator="implicitfast" solver="CG"/>
+  <size nkey="10"/>
+  <statistic meansize="0.0182689" extent="2" center="0 0 0"/>
+  <extension>
+    <plugin plugin="mujoco.elasticity.shell">
+      <instance name="flexcomp_cloth">
+        <config key="face" value="0 10 11 0 11 1 1 11 12 1 12 2 2 12 13 2 13 3 3 13 14 3 14 4 4 14 15 4 15 5 5 15 16 5 16 6 6 16 17 6 17 7 7 17 18 7 18 8 8 18 19 8 19 9 10 20 21 10 21 11 11 21 22 11 22 12 12 22 23 12 23 13 13 23 24 13 24 14 14 24 25 14 25 15 15 25 26 15 26 16 16 26 27 16 27 17 17 27 28 17 28 18 18 28 29 18 29 19 20 30 31 20 31 21 21 31 32 21 32 22 22 32 33 22 33 23 23 33 34 23 34 24 24 34 35 24 35 25 25 35 36 25 36 26 26 36 37 26 37 27 27 37 38 27 38 28 28 38 39 28 39 29 30 40 41 30 41 31 31 41 42 31 42 32 32 42 43 32 43 33 33 43 44 33 44 34 34 44 45 34 45 35 35 45 46 35 46 36 36 46 47 36 47 37 37 47 48 37 48 38 38 48 49 38 49 39 40 50 51 40 51 41 41 51 52 41 52 42 42 52 53 42 53 43 43 53 54 43 54 44 44 54 55 44 55 45 45 55 56 45 56 46 46 56 57 46 57 47 47 57 58 47 58 48 48 58 59 48 59 49 50 60 61 50 61 51 51 61 62 51 62 52 52 62 63 52 63 53 53 63 64 53 64 54 54 64 65 54 65 55 55 65 66 55 66 56 56 66 67 56 67 57 57 67 68 57 68 58 58 68 69 58 69 59 60 70 71 60 71 61 61 71 72 61 72 62 62 72 73 62 73 63 63 73 74 63 74 64 64 74 75 64 75 65 65 75 76 65 76 66 66 76 77 66 77 67 67 77 78 67 78 68 68 78 79 68 79 69 70 80 81 70 81 71 71 81 82 71 82 72 72 82 83 72 83 73 73 83 84 73 84 74 74 84 85 74 85 75 75 85 86 75 86 76 76 86 87 76 87 77 77 87 88 77 88 78 78 88 89 78 89 79 80 90 91 80 91 81 81 91 92 81 92 82 82 92 93 82 93 83 83 93 94 83 94 84 84 94 95 84 95 85 85 95 96 85 96 86 86 96 97 86 97 87 87 97 98 87 98 88 88 98 99 88 99 89 90 100 101 90 101 91 91 101 102 91 102 92 92 102 103 92 103 93 93 103 104 93 104 94 94 104 105 94 105 95 95 105 106 95 106 96 96 106 107 96 107 97 97 107 108 97 108 98 98 108 109 98 109 99 100 110 111 100 111 101 101 111 112 101 112 102 102 112 113 102 113 103 103 113 114 103 114 104 104 114 115 104 115 105 105 115 116 105 116 106 106 116 117 106 117 107 107 117 118 107 118 108 108 118 119 108 119 109 110 120 121 110 121 111 111 121 122 111 122 112 112 122 123 112 123 113 113 123 124 113 124 114 114 124 125 114 125 115 115 125 126 115 126 116 116 126 127 116 127 117 117 127 128 117 128 118 118 128 129 118 129 119 120 130 131 120 131 121 121 131 132 121 132 122 122 132 133 122 133 123 123 133 134 123 134 124 124 134 135 124 135 125 125 135 136 125 136 126 126 136 137 126 137 127 127 137 138 127 138 128 128 138 139 128 139 129 130 140 141 130 141 131 131 141 142 131 142 132 132 142 143 132 143 133 133 143 144 133 144 134 134 144 145 134 145 135 135 145 146 135 146 136 136 146 147 136 147 137 137 147 148 137 148 138 138 148 149 138 149 139 140 150 151 140 151 141 141 151 152 141 152 142 142 152 153 142 153 143 143 153 154 143 154 144 144 154 155 144 155 145 145 155 156 145 156 146 146 156 157 146 157 147 147 157 158 147 158 148 148 158 159 148 159 149 150 160 161 150 161 151 151 161 162 151 162 152 152 162 163 152 163 153 153 163 164 153 164 154 154 164 165 154 165 155 155 165 166 155 166 156 156 166 167 156 167 157 157 167 168 157 168 158 158 168 169 158 169 159 160 170 171 160 171 161 161 171 172 161 172 162 162 172 173 162 173 163 163 173 174 163 174 164 164 174 175 164 175 165 165 175 176 165 176 166 166 176 177 166 177 167 167 177 178 167 178 168 168 178 179 168 179 169 170 180 181 170 181 171 171 181 182 171 182 172 172 182 183 172 183 173 173 183 184 173 184 174 174 184 185 174 185 175 175 185 186 175 186 176 176 186 187 176 187 177 177 187 188 177 188 178 178 188 189 178 189 179 180 190 191 180 191 181 181 191 192 181 192 182 182 192 193 182 193 183 183 193 194 183 194 184 184 194 195 184 195 185 185 195 196 185 196 186 186 196 197 186 197 187 187 197 198 187 198 188 188 198 199 188 199 189"/>
+        <config key="edge" value="0 1 2 3 4 1 5 6 3 7 8 6 9 10 7 11 12 10 13 14 11 15 16 14 17 18 15 19 20 18 21 22 19 23 24 22 25 26 23 27 28 26 29 30 27 31 32 30 33 34 31 35 36 34 37 38 39 40 0 38 41 42 40 43 5 42 44 45 43 46 9 45 47 48 46 49 13 48 50 51 49 52 17 51 53 54 52 55 21 54 56 57 55 58 25 57 59 60 58 61 29 60 62 63 61 64 33 63 65 66 67 68 37 66 69 70 68 71 41 70 72 73 71 74 44 73 75 76 74 77 47 76 78 79 77 80 50 79 81 82 80 83 53 82 84 85 83 86 56 85 87 88 86 89 59 88 90 91 89 92 62 91 93 94 95 96 65 94 97 98 96 99 69 98 100 101 99 102 72 101 103 104 102 105 75 104 106 107 105 108 78 107 109 110 108 111 81 110 112 113 111 114 84 113 115 116 114 117 87 116 118 119 117 120 90 119 121 122 123 124 93 122 125 126 124 127 97 126 128 129 127 130 100 129 131 132 130 133 103 132 134 135 133 136 106 135 137 138 136 139 109 138 140 141 139 142 112 141 143 144 142 145 115 144 146 147 145 148 118 147 149 150 151 152 121 150 153 154 152 155 125 154 156 157 155 158 128 157 159 160 158 161 131 160 162 163 161 164 134 163 165 166 164 167 137 166 168 169 167 170 140 169 171 172 170 173 143 172 174 175 173 176 146 175 177 178 179 180 149 178 181 182 180 183 153 182 184 185 183 186 156 185 187 188 186 189 159 188 190 191 189 192 162 191 193 194 192 195 165 194 196 197 195 198 168 197 199 200 198 201 171 200 202 203 201 204 174 203 205 206 207 208 177 206 209 210 208 211 181 210 212 213 211 214 184 213 215 216 214 217 187 216 218 219 217 220 190 219 221 222 220 223 193 222 224 225 223 226 196 225 227 228 226 229 199 228 230 231 229 232 202 231 233 234 235 236 205 234 237 238 236 239 209 238 240 241 239 242 212 241 243 244 242 245 215 244 246 247 245 248 218 247 249 250 248 251 221 250 252 253 251 254 224 253 255 256 254 257 227 256 258 259 257 260 230 259 261 262 263 264 233 262 265 266 264 267 237 266 268 269 267 270 240 269 271 272 270 273 243 272 274 275 273 276 246 275 277 278 276 279 249 278 280 281 279 282 252 281 283 284 282 285 255 284 286 287 285 288 258 287 289 290 291 292 261 290 293 294 292 295 265 294 296 297 295 298 268 297 299 300 298 301 271 300 302 303 301 304 274 303 305 306 304 307 277 306 308 309 307 310 280 309 311 312 310 313 283 312 314 315 313 316 286 315 317 318 319 320 289 318 321 322 320 323 293 322 324 325 323 326 296 325 327 328 326 329 299 328 330 331 329 332 302 331 333 334 332 335 305 334 336 337 335 338 308 337 339 340 338 341 311 340 342 343 341 344 314 343 345 346 347 348 317 346 349 350 348 351 321 350 352 353 351 354 324 353 355 356 354 357 327 356 358 359 357 360 330 359 361 362 360 363 333 362 364 365 363 366 336 365 367 368 366 369 339 368 370 371 369 372 342 371 373 374 375 376 345 374 377 378 376 379 349 378 380 381 379 382 352 381 383 384 382 385 355 384 386 387 385 388 358 387 389 390 388 391 361 390 392 393 391 394 364 393 395 396 394 397 367 396 398 399 397 400 370 399 401 402 403 404 373 402 405 406 404 407 377 406 408 409 407 410 380 409 411 412 410 413 383 412 414 415 413 416 386 415 417 418 416 419 389 418 420 421 419 422 392 421 423 424 422 425 395 424 426 427 425 428 398 427 429 430 431 432 401 430 433 434 432 435 405 434 436 437 435 438 408 437 439 440 438 441 411 440 442 443 441 444 414 443 445 446 444 447 417 446 448 449 447 450 420 449 451 452 450 453 423 452 454 455 453 456 426 455 457 458 459 460 429 458 461 462 460 463 433 462 464 465 463 466 436 465 467 468 466 469 439 468 470 471 469 472 442 471 473 474 472 475 445 474 476 477 475 478 448 477 479 480 478 481 451 480 482 483 481 484 454 483 485 486 487 488 457 486 489 490 488 491 461 490 492 493 491 494 464 493 495 496 494 497 467 496 498 499 497 500 470 499 501 502 500 503 473 502 504 505 503 506 476 505 507 508 506 509 479 508 510 511 509 512 482 511 513 514 515 516 485 514 517 518 516 519 489 518 520 521 519 522 492 521 523 524 522 525 495 524 526 527 525 528 498 527 529 530 528 531 501 530 532 533 531 534 504 533 535 536 534 537 507 536 538 539 537 540 510 539 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+        <config key="young" value="85242.02369946481"/>
+        <config key="poisson" value="0.4032740512363587"/>
+        <config key="thickness" value="0.0005"/>
+      </instance>
+    </plugin>
+  </extension>
+  <worldbody>
+    <geom name="floor" size="0 0 0.1" type="plane"/>
+    <light pos="0 0 4" dir="0 0 -1" diffuse="0.6 0.6 0.6" specular="0.2 0.2 0.2"/>
+
+    <body pos="0.1 0 0.5" quat="0.973249 0 0.229753 0" mocap="true" name="mocap:0" >
+      <geom size="0.01 0.01" type="capsule" group="1"/>
+    </body>
+    <body pos="0.2 0 0.5" quat="0.973249 0 0.229753 0" mocap="true" name="mocap:1" >
+      <geom size="0.01 0.01" type="capsule" group="1"/>
+    </body>
+    <body pos="0.3 0 0.5" quat="0.973249 0 0.229753 0" mocap="true" name="mocap:2" >
+      <geom size="0.01 0.01" type="capsule" group="1"/>
+    </body>
+    <body pos="0.4 0 0.5" quat="0.973249 0 0.229753 0" mocap="true" name="mocap:3" >
+      <geom size="0.01 0.01" type="capsule" group="1"/>
+    </body>
+
+    <body>
+      <body name="object" pos="0 0 0">
+        <site name="bottom_site" pos="0 0 -0.045" rgba="0 0 0 0"/>
+        <site name="top_site" pos="0 0 0.03" rgba="0 0 0 0"/>
+        <site name="horizontal_radius_site" pos="0.03 0.03 0" rgba="0 0 0 0"/>
+        <body name="cloth_0" pos="-0.11875 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_1" pos="-0.11875 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_2" pos="-0.11875 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_3" pos="-0.11875 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_4" pos="-0.11875 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_5" pos="-0.11875 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_6" pos="-0.11875 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_7" pos="-0.11875 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_8" pos="-0.11875 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_9" pos="-0.11875 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_10" pos="-0.10625 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_11" pos="-0.10625 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_12" pos="-0.10625 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_13" pos="-0.10625 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_14" pos="-0.10625 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_15" pos="-0.10625 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_16" pos="-0.10625 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_17" pos="-0.10625 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_18" pos="-0.10625 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_19" pos="-0.10625 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_20" pos="-0.09375 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_21" pos="-0.09375 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_22" pos="-0.09375 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_23" pos="-0.09375 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_24" pos="-0.09375 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_25" pos="-0.09375 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_26" pos="-0.09375 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_27" pos="-0.09375 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_28" pos="-0.09375 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_29" pos="-0.09375 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_30" pos="-0.08125 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_31" pos="-0.08125 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_32" pos="-0.08125 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_33" pos="-0.08125 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_34" pos="-0.08125 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_35" pos="-0.08125 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_36" pos="-0.08125 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_37" pos="-0.08125 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_38" pos="-0.08125 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_39" pos="-0.08125 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_40" pos="-0.06875 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_41" pos="-0.06875 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_42" pos="-0.06875 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_43" pos="-0.06875 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_44" pos="-0.06875 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_45" pos="-0.06875 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_46" pos="-0.06875 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_47" pos="-0.06875 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_48" pos="-0.06875 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_49" pos="-0.06875 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_50" pos="-0.05625 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_51" pos="-0.05625 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_52" pos="-0.05625 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_53" pos="-0.05625 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_54" pos="-0.05625 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_55" pos="-0.05625 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_56" pos="-0.05625 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_57" pos="-0.05625 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_58" pos="-0.05625 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_59" pos="-0.05625 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_60" pos="-0.04375 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_61" pos="-0.04375 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_62" pos="-0.04375 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_63" pos="-0.04375 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_64" pos="-0.04375 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_65" pos="-0.04375 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_66" pos="-0.04375 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_67" pos="-0.04375 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_68" pos="-0.04375 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_69" pos="-0.04375 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_70" pos="-0.03125 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_71" pos="-0.03125 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_72" pos="-0.03125 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_73" pos="-0.03125 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_74" pos="-0.03125 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_75" pos="-0.03125 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_76" pos="-0.03125 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_77" pos="-0.03125 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_78" pos="-0.03125 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_79" pos="-0.03125 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_80" pos="-0.01875 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_81" pos="-0.01875 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_82" pos="-0.01875 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_83" pos="-0.01875 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_84" pos="-0.01875 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_85" pos="-0.01875 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_86" pos="-0.01875 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_87" pos="-0.01875 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_88" pos="-0.01875 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_89" pos="-0.01875 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_90" pos="-0.00625 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_91" pos="-0.00625 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_92" pos="-0.00625 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_93" pos="-0.00625 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_94" pos="-0.00625 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_95" pos="-0.00625 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_96" pos="-0.00625 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_97" pos="-0.00625 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_98" pos="-0.00625 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_99" pos="-0.00625 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_100" pos="0.00625 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_101" pos="0.00625 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_102" pos="0.00625 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_103" pos="0.00625 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_104" pos="0.00625 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_105" pos="0.00625 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_106" pos="0.00625 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_107" pos="0.00625 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_108" pos="0.00625 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_109" pos="0.00625 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_110" pos="0.01875 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_111" pos="0.01875 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_112" pos="0.01875 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_113" pos="0.01875 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_114" pos="0.01875 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_115" pos="0.01875 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_116" pos="0.01875 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_117" pos="0.01875 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_118" pos="0.01875 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_119" pos="0.01875 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_120" pos="0.03125 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_121" pos="0.03125 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_122" pos="0.03125 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_123" pos="0.03125 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_124" pos="0.03125 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_125" pos="0.03125 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_126" pos="0.03125 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_127" pos="0.03125 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_128" pos="0.03125 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_129" pos="0.03125 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_130" pos="0.04375 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_131" pos="0.04375 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_132" pos="0.04375 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_133" pos="0.04375 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_134" pos="0.04375 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_135" pos="0.04375 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_136" pos="0.04375 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_137" pos="0.04375 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_138" pos="0.04375 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_139" pos="0.04375 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_140" pos="0.05625 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_141" pos="0.05625 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_142" pos="0.05625 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_143" pos="0.05625 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_144" pos="0.05625 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_145" pos="0.05625 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_146" pos="0.05625 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_147" pos="0.05625 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_148" pos="0.05625 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_149" pos="0.05625 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_150" pos="0.06875 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_151" pos="0.06875 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_152" pos="0.06875 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_153" pos="0.06875 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_154" pos="0.06875 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_155" pos="0.06875 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_156" pos="0.06875 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_157" pos="0.06875 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_158" pos="0.06875 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_159" pos="0.06875 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_160" pos="0.08125 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_161" pos="0.08125 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_162" pos="0.08125 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_163" pos="0.08125 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_164" pos="0.08125 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_165" pos="0.08125 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_166" pos="0.08125 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_167" pos="0.08125 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_168" pos="0.08125 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_169" pos="0.08125 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_170" pos="0.09375 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_171" pos="0.09375 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_172" pos="0.09375 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_173" pos="0.09375 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_174" pos="0.09375 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_175" pos="0.09375 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_176" pos="0.09375 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_177" pos="0.09375 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_178" pos="0.09375 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_179" pos="0.09375 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_180" pos="0.10625 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_181" pos="0.10625 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_182" pos="0.10625 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_183" pos="0.10625 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_184" pos="0.10625 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_185" pos="0.10625 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_186" pos="0.10625 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_187" pos="0.10625 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_188" pos="0.10625 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_189" pos="0.10625 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_190" pos="0.11875 -0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_191" pos="0.11875 -0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_192" pos="0.11875 -0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_193" pos="0.11875 -0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_194" pos="0.11875 -0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_195" pos="0.11875 0.00625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_196" pos="0.11875 0.01875 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_197" pos="0.11875 0.03125 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_198" pos="0.11875 0.04375 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+        <body name="cloth_199" pos="0.11875 0.05625 0">
+          <inertial pos="0 0 0" mass="0.0025" diaginertia="4.16667e-08 4.16667e-08 4.16667e-08"/>
+          <joint pos="0 0 0" axis="1 0 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 1 0" type="slide"/>
+          <joint pos="0 0 0" axis="0 0 1" type="slide"/>
+          <plugin instance="flexcomp_cloth"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <deformable>
+    <flex name="cloth" radius="0.006" body="cloth_0 cloth_1 cloth_2 cloth_3 cloth_4 cloth_5 cloth_6 cloth_7 cloth_8 cloth_9 cloth_10 cloth_11 cloth_12 cloth_13 cloth_14 cloth_15 cloth_16 cloth_17 cloth_18 cloth_19 cloth_20 cloth_21 cloth_22 cloth_23 cloth_24 cloth_25 cloth_26 cloth_27 cloth_28 cloth_29 cloth_30 cloth_31 cloth_32 cloth_33 cloth_34 cloth_35 cloth_36 cloth_37 cloth_38 cloth_39 cloth_40 cloth_41 cloth_42 cloth_43 cloth_44 cloth_45 cloth_46 cloth_47 cloth_48 cloth_49 cloth_50 cloth_51 cloth_52 cloth_53 cloth_54 cloth_55 cloth_56 cloth_57 cloth_58 cloth_59 cloth_60 cloth_61 cloth_62 cloth_63 cloth_64 cloth_65 cloth_66 cloth_67 cloth_68 cloth_69 cloth_70 cloth_71 cloth_72 cloth_73 cloth_74 cloth_75 cloth_76 cloth_77 cloth_78 cloth_79 cloth_80 cloth_81 cloth_82 cloth_83 cloth_84 cloth_85 cloth_86 cloth_87 cloth_88 cloth_89 cloth_90 cloth_91 cloth_92 cloth_93 cloth_94 cloth_95 cloth_96 cloth_97 cloth_98 cloth_99 cloth_100 cloth_101 cloth_102 cloth_103 cloth_104 cloth_105 cloth_106 cloth_107 cloth_108 cloth_109 cloth_110 cloth_111 cloth_112 cloth_113 cloth_114 cloth_115 cloth_116 cloth_117 cloth_118 cloth_119 cloth_120 cloth_121 cloth_122 cloth_123 cloth_124 cloth_125 cloth_126 cloth_127 cloth_128 cloth_129 cloth_130 cloth_131 cloth_132 cloth_133 cloth_134 cloth_135 cloth_136 cloth_137 cloth_138 cloth_139 cloth_140 cloth_141 cloth_142 cloth_143 cloth_144 cloth_145 cloth_146 cloth_147 cloth_148 cloth_149 cloth_150 cloth_151 cloth_152 cloth_153 cloth_154 cloth_155 cloth_156 cloth_157 cloth_158 cloth_159 cloth_160 cloth_161 cloth_162 cloth_163 cloth_164 cloth_165 cloth_166 cloth_167 cloth_168 cloth_169 cloth_170 cloth_171 cloth_172 cloth_173 cloth_174 cloth_175 cloth_176 cloth_177 cloth_178 cloth_179 cloth_180 cloth_181 cloth_182 cloth_183 cloth_184 cloth_185 cloth_186 cloth_187 cloth_188 cloth_189 cloth_190 cloth_191 cloth_192 cloth_193 cloth_194 cloth_195 cloth_196 cloth_197 cloth_198 cloth_199" element="0 10 11 0 11 1 1 11 12 1 12 2 2 12 13 2 13 3 3 13 14 3 14 4 4 14 15 4 15 5 5 15 16 5 16 6 6 16 17 6 17 7 7 17 18 7 18 8 8 18 19 8 19 9 10 20 21 10 21 11 11 21 22 11 22 12 12 22 23 12 23 13 13 23 24 13 24 14 14 24 25 14 25 15 15 25 26 15 26 16 16 26 27 16 27 17 17 27 28 17 28 18 18 28 29 18 29 19 20 30 31 20 31 21 21 31 32 21 32 22 22 32 33 22 33 23 23 33 34 23 34 24 24 34 35 24 35 25 25 35 36 25 36 26 26 36 37 26 37 27 27 37 38 27 38 28 28 38 39 28 39 29 30 40 41 30 41 31 31 41 42 31 42 32 32 42 43 32 43 33 33 43 44 33 44 34 34 44 45 34 45 35 35 45 46 35 46 36 36 46 47 36 47 37 37 47 48 37 48 38 38 48 49 38 49 39 40 50 51 40 51 41 41 51 52 41 52 42 42 52 53 42 53 43 43 53 54 43 54 44 44 54 55 44 55 45 45 55 56 45 56 46 46 56 57 46 57 47 47 57 58 47 58 48 48 58 59 48 59 49 50 60 61 50 61 51 51 61 62 51 62 52 52 62 63 52 63 53 53 63 64 53 64 54 54 64 65 54 65 55 55 65 66 55 66 56 56 66 67 56 67 57 57 67 68 57 68 58 58 68 69 58 69 59 60 70 71 60 71 61 61 71 72 61 72 62 62 72 73 62 73 63 63 73 74 63 74 64 64 74 75 64 75 65 65 75 76 65 76 66 66 76 77 66 77 67 67 77 78 67 78 68 68 78 79 68 79 69 70 80 81 70 81 71 71 81 82 71 82 72 72 82 83 72 83 73 73 83 84 73 84 74 74 84 85 74 85 75 75 85 86 75 86 76 76 86 87 76 87 77 77 87 88 77 88 78 78 88 89 78 89 79 80 90 91 80 91 81 81 91 92 81 92 82 82 92 93 82 93 83 83 93 94 83 94 84 84 94 95 84 95 85 85 95 96 85 96 86 86 96 97 86 97 87 87 97 98 87 98 88 88 98 99 88 99 89 90 100 101 90 101 91 91 101 102 91 102 92 92 102 103 92 103 93 93 103 104 93 104 94 94 104 105 94 105 95 95 105 106 95 106 96 96 106 107 96 107 97 97 107 108 97 108 98 98 108 109 98 109 99 100 110 111 100 111 101 101 111 112 101 112 102 102 112 113 102 113 103 103 113 114 103 114 104 104 114 115 104 115 105 105 115 116 105 116 106 106 116 117 106 117 107 107 117 118 107 118 108 108 118 119 108 119 109 110 120 121 110 121 111 111 121 122 111 122 112 112 122 123 112 123 113 113 123 124 113 124 114 114 124 125 114 125 115 115 125 126 115 126 116 116 126 127 116 127 117 117 127 128 117 128 118 118 128 129 118 129 119 120 130 131 120 131 121 121 131 132 121 132 122 122 132 133 122 133 123 123 133 134 123 134 124 124 134 135 124 135 125 125 135 136 125 136 126 126 136 137 126 137 127 127 137 138 127 138 128 128 138 139 128 139 129 130 140 141 130 141 131 131 141 142 131 142 132 132 142 143 132 143 133 133 143 144 133 144 134 134 144 145 134 145 135 135 145 146 135 146 136 136 146 147 136 147 137 137 147 148 137 148 138 138 148 149 138 149 139 140 150 151 140 151 141 141 151 152 141 152 142 142 152 153 142 153 143 143 153 154 143 154 144 144 154 155 144 155 145 145 155 156 145 156 146 146 156 157 146 157 147 147 157 158 147 158 148 148 158 159 148 159 149 150 160 161 150 161 151 151 161 162 151 162 152 152 162 163 152 163 153 153 163 164 153 164 154 154 164 165 154 165 155 155 165 166 155 166 156 156 166 167 156 167 157 157 167 168 157 168 158 158 168 169 158 169 159 160 170 171 160 171 161 161 171 172 161 172 162 162 172 173 162 173 163 163 173 174 163 174 164 164 174 175 164 175 165 165 175 176 165 176 166 166 176 177 166 177 167 167 177 178 167 178 168 168 178 179 168 179 169 170 180 181 170 181 171 171 181 182 171 182 172 172 182 183 172 183 173 173 183 184 173 184 174 174 184 185 174 185 175 175 185 186 175 186 176 176 186 187 176 187 177 177 187 188 177 188 178 178 188 189 178 189 179 180 190 191 180 191 181 181 191 192 181 192 182 182 192 193 182 193 183 183 193 194 183 194 184 184 194 195 184 195 185 185 195 196 185 196 186 186 196 197 186 197 187 187 197 198 187 198 188 188 198 199 188 199 189">
+      <contact solref="0.003 1" solimp="0.95 0.99 0.0001 0.5 2" selfcollide="none"/>
+      <edge damping="0.1"/>
+    </flex>
+  </deformable>
+  <equality>
+    <flex flex="cloth"/>
+    <weld body1="cloth_0" body2="mocap:0" name="weld1"/>
+    <weld body1="cloth_9" body2="mocap:1" name="weld2"/>
+    <weld body1="cloth_190" body2="mocap:2" name="weld3"/>
+    <weld body1="cloth_199" body2="mocap:3" name="weld4"/>
+    <weld body1="object" body2="cloth_95" name="weld5"/>
+  </equality>
+</mujoco>

@@ -1432,5 +1432,6 @@
 	</deformable>
 	<equality>
 		<flex flex="cloth"></flex>
+<!--		<weld body1="object" body2="cloth_13" name="weld0"/>-->
 	</equality>
 </mujoco>
