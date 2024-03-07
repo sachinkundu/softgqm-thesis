@@ -26,6 +26,12 @@ n_bodies_to_asset_file = {
     200: "baked_200.xml"
 }
 
+n_bodies_to_vertices = {
+    25:  [0, 4, 20, 24],
+    50:  [0, 9, 40, 49],
+    100: [0, 10, 90, 99],
+    200: [0, 9, 190, 199]
+}
 
 class UnfoldCloth(SingleArmEnv):
     """
@@ -173,7 +179,7 @@ class UnfoldCloth(SingleArmEnv):
     def _create_cloth(self) -> MujocoObject:
         asset_path = Path(__file__).parent.parent.parent / "assets"
         cloth_xml = str((asset_path / n_bodies_to_asset_file[self.n_cloth]).resolve())
-        self.cloth_corner_vertices = np.array([0, 4, 20, 24])
+        self.cloth_corner_vertices = n_bodies_to_vertices[self.n_cloth]
         return ClothObject(cloth_xml, "cloth")
 
     def _load_model(self):
@@ -407,8 +413,9 @@ class UnfoldCloth(SingleArmEnv):
 
     def _grasp_imp(self):
         last_obs = None
-        for i in range(50):
-            obs, reward, done, _ = self.step([0, 0, 0, 0, 0, 0, self.grasp_state])
+        trajectory = np.linspace(-1, 1, 10) if self.grasp_state == 1 else np.linspace(1, -1, 10)
+        for step in trajectory:
+            obs, reward, done, _ = self.step([0, 0, 0, 0, 0, 0, step])
             if not self.headless:
                 self.render()
             last_obs = obs
