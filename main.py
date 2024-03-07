@@ -1,20 +1,15 @@
 import math
-
 import cv2
 import time
 import click
 import mujoco
 import logging
-from pathlib import Path
-import modern_robotics as mr
-import numpy as np
-import robosuite.utils.transform_utils as rsu
 from src.envs import UnfoldCloth
+import robosuite.utils.camera_utils as rcu
 from robosuite.utils.input_utils import *
+import robosuite.utils.transform_utils as rtu
 from robosuite.controllers import load_controller_config
 from dm_robotics.transformations import transformations as tr
-
-import robosuite.utils.camera_utils as CU
 
 
 def get_random_angle(a, b):
@@ -23,21 +18,23 @@ def get_random_angle(a, b):
 
 
 @click.command()
-@click.option('--cloth', is_flag=True, help="include cloth in sim")
+@click.option('--n-cloth', default=0, help="include cloth in sim")
 @click.option('--n', default=1, show_default=True, help="number of simulation runs")
 @click.option('--debug', is_flag=True, default=False, show_default=True, help="debug logging")
 @click.option('--show-sites', is_flag=True, default=False, help="include cloth in sim")
 @click.option('--headless', is_flag=True, default=False, help="Run without rendering")
 @click.option('--label', is_flag=True, default=False, help="Show body labels")
-def main(cloth, n, debug, show_sites, headless, label):
+def main(n_cloth, n, debug, show_sites, headless, label):
     log_level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
+
+    cloth = True if n_cloth > 0 else False
 
     # Create dict to hold options that will be passed to env creation call
     options = {
         "robots": "Panda",
         "env_name": UnfoldCloth.__name__.split(".")[-1],
-        "asset_path": str((Path(__file__).parent / "assets").resolve())
+        "n_cloth": n_cloth
     }
 
     # Choose controller
@@ -60,7 +57,7 @@ def main(cloth, n, debug, show_sites, headless, label):
         ignore_done=True,
         use_camera_obs=True,
         control_freq=2,
-        include_cloth=cloth,
+        include_cloth=True if n_cloth > 0 else False,
         logger=logging.getLogger(__name__),
         camera_depths=True,
         camera_names=camera_to_use,
@@ -88,22 +85,16 @@ def main(cloth, n, debug, show_sites, headless, label):
             if label:
                 env.sim._render_context_offscreen.vopt.label = mujoco.mjtLabel.mjLABEL_BODY
 
-            if not cloth:
-                pick_object_pose = rsu.make_pose(pixels_to_world(fake_policy(initial_state,
-                                                                             camera_to_use, env, cloth, headless),
-                                                                 initial_state, camera_to_use, env),
-                                                 tr.quat_to_mat(initial_state["cube_quat"])[:-1, :-1])
-            else:
-
+            if cloth:
                 start = time.time()
-                while time.time() < start + 120:
-                    action = np.zeros(shape=(env.action_dim, ))
+                while time.time() < start + 10:
+                    action = np.zeros(shape=(env.action_dim,))
                     action[-1] = -1
                     env.step(action)
                     if not headless:
                         env.render()
 
-                cloth_id = get_highest_cloth_body(env)
+                cloth_id = get_highest_cloth_body(env, n_cloth)
                 cloth_body_pos = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
                 cloth_body_quat = env.sim.data.body_xquat[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
 
@@ -111,7 +102,12 @@ def main(cloth, n, debug, show_sites, headless, label):
 
                 env.set_cloth_body_id(cloth_id)
 
-                pick_object_pose = rsu.make_pose(cloth_body_pos, tr.quat_to_mat(cloth_body_quat)[:-1, :-1])
+                pick_object_pose = rtu.make_pose(cloth_body_pos, tr.quat_to_mat(cloth_body_quat)[:-1, :-1])
+            else:
+                pick_object_pose = rtu.make_pose(pixels_to_world(fake_policy(initial_state,
+                                                                             camera_to_use, env, cloth, headless),
+                                                                 initial_state, camera_to_use, env),
+                                                 tr.quat_to_mat(initial_state["cube_quat"])[:-1, :-1])
 
             optimal_pick_object_pose, angle = optimal_grasp(pick_object_pose)
             last_obs, success = env.pick(optimal_pick_object_pose)
@@ -145,7 +141,7 @@ def optimal_grasp(pick_object_pose):
 
 def pixels_to_world(pixels, state, camera_name, env):
     depth_map = state["{}_depth".format(camera_name)][::-1]
-    world_to_camera = CU.get_camera_transform_matrix(
+    world_to_camera = rcu.get_camera_transform_matrix(
         sim=env.sim,
         camera_name=camera_name,
         camera_height=env.camera_heights[0],
@@ -153,8 +149,8 @@ def pixels_to_world(pixels, state, camera_name, env):
     )
     camera_to_world = np.linalg.inv(world_to_camera)
 
-    depth_map = CU.get_real_depth_map(sim=env.sim, depth_map=depth_map)
-    estimated_obj_pos = CU.transform_from_pixels_to_world(
+    depth_map = rcu.get_real_depth_map(sim=env.sim, depth_map=depth_map)
+    estimated_obj_pos = rcu.transform_from_pixels_to_world(
         pixels=pixels,
         depth_map=depth_map,
         camera_to_world_transform=camera_to_world,
@@ -165,7 +161,7 @@ def pixels_to_world(pixels, state, camera_name, env):
 
 def fake_policy(state, camera_to_use, env, cloth, headless):
     obj_pos = policy(cloth, env, state, headless)
-    world_to_camera = CU.get_camera_transform_matrix(
+    world_to_camera = rcu.get_camera_transform_matrix(
         sim=env.sim,
         camera_name=camera_to_use,
         camera_height=env.camera_heights[0],
@@ -173,7 +169,7 @@ def fake_policy(state, camera_to_use, env, cloth, headless):
     )
 
     # transform object position into camera pixel
-    obj_pixel = CU.project_points_from_world_to_camera(
+    obj_pixel = rcu.project_points_from_world_to_camera(
         points=obj_pos,
         world_to_camera_transform=world_to_camera,
         camera_height=env.camera_heights[0],
@@ -183,11 +179,11 @@ def fake_policy(state, camera_to_use, env, cloth, headless):
     return np.array([125, 200]) if cloth else obj_pixel
 
 
-def get_highest_cloth_body(env):
+def get_highest_cloth_body(env, n_bodies):
     highest_height = 0.0
     highest_body = None
 
-    for i in range(25):
+    for i in range(n_bodies):
         current_cloth_body_height = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{i}")][2]
         logging.info(f"highest_height: {current_cloth_body_height}, i: {i} , highest_body: {highest_body}")
         if current_cloth_body_height > highest_height:

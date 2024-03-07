@@ -19,6 +19,13 @@ from src.trajectory_follower import TrajectoryFollower
 
 from dm_robotics.transformations import transformations as tr
 
+n_bodies_to_asset_file = {
+    25: "baked_25.xml",
+    50: "baked_50.xml",
+    100: "baked_100.xml",
+    200: "baked_200.xml"
+}
+
 
 class UnfoldCloth(SingleArmEnv):
     """
@@ -28,6 +35,7 @@ class UnfoldCloth(SingleArmEnv):
     def __init__(
             self,
             robots,
+            n_cloth,
             env_configuration="default",
             controller_configs=None,
             gripper_types="default",
@@ -56,7 +64,6 @@ class UnfoldCloth(SingleArmEnv):
             camera_segmentations=None,  # {None, instance, class, element}
             renderer="mujoco",
             renderer_config=None,
-            asset_path=None,
             include_cloth=False,
             logger=None,
             headless=False
@@ -76,8 +83,7 @@ class UnfoldCloth(SingleArmEnv):
         # object placement initializer
         self.placement_initializer = placement_initializer
 
-        #
-        self.asset_path = asset_path
+        self.n_cloth = n_cloth
         self.include_cloth = include_cloth
         self.logger = logger
         self.grasp_state = -1  # Not grasping to start with
@@ -85,7 +91,7 @@ class UnfoldCloth(SingleArmEnv):
         self.last_obs = None
         self.cloth_body_id = None
         self.done = False
-        self.cloth_body_pos = np.zeros(shape=(3, ))
+        self.cloth_body_pos = np.zeros(shape=(3,))
 
         super().__init__(
             robots=robots,
@@ -123,14 +129,16 @@ class UnfoldCloth(SingleArmEnv):
     def reward(self, action=None):
         if self.include_cloth:
             if self.done:
-                bottom_left = self.sim.data.body_xpos[self.sim.model.body_name2id(f"cloth_{self.cloth_corner_vertices[0]}")]
-                top_left = self.sim.data.body_xpos[self.sim.model.body_name2id(f"cloth_{self.cloth_corner_vertices[1]}")]
+                bottom_left = self.sim.data.body_xpos[
+                    self.sim.model.body_name2id(f"cloth_{self.cloth_corner_vertices[0]}")]
+                top_left = self.sim.data.body_xpos[
+                    self.sim.model.body_name2id(f"cloth_{self.cloth_corner_vertices[1]}")]
                 bottom_right = self.sim.data.body_xpos[
                     self.sim.model.body_name2id(f"cloth_{self.cloth_corner_vertices[2]}")]
                 l1 = np.linalg.norm(bottom_left - top_left)
                 l2 = np.linalg.norm(bottom_left - bottom_right)
                 r = np.round(l1 * l2 * 1000, decimals=2)
-                return r    # Area of a rectangular cloth is the reward - in mm
+                return r  # Area of a rectangular cloth is the reward - in mm
             else:
                 return 0
         else:
@@ -163,9 +171,10 @@ class UnfoldCloth(SingleArmEnv):
         )
 
     def _create_cloth(self) -> MujocoObject:
+        asset_path = Path(__file__).parent.parent.parent / "assets"
+        cloth_xml = str((asset_path / n_bodies_to_asset_file[self.n_cloth]).resolve())
         self.cloth_corner_vertices = np.array([0, 4, 20, 24])
-        return ClothObject(str((Path(self.asset_path) / "cloth_simple_long_expanded_baked.xml").resolve()),
-                           "cloth")
+        return ClothObject(cloth_xml, "cloth")
 
     def _load_model(self):
         """
@@ -302,7 +311,7 @@ class UnfoldCloth(SingleArmEnv):
 
         self.grasp_state = -1  # Not grasping to start with
         self.done = False
-        self.cloth_body_pos = np.zeros(shape=(3, ))
+        self.cloth_body_pos = np.zeros(shape=(3,))
 
         super()._reset_internal()
 
@@ -346,11 +355,13 @@ class UnfoldCloth(SingleArmEnv):
         self._hover(pick_pose)
         if self.include_cloth:
             cloth_id = f"cloth_{self.cloth_body_id}"
-            self.logger.info(f"cloth_body_pos after hover: {self.sim.data.body_xpos[self.sim.model.body_name2id(cloth_id)]}")
+            self.logger.info(
+                f"cloth_body_pos after hover: {self.sim.data.body_xpos[self.sim.model.body_name2id(cloth_id)]}")
         self._lift(height=-0.07)
         if self.include_cloth:
             cloth_id = f"cloth_{self.cloth_body_id}"
-            self.logger.info(f"cloth_body_pos after lift down: {self.sim.data.body_xpos[self.sim.model.body_name2id(cloth_id)]}")
+            self.logger.info(
+                f"cloth_body_pos after lift down: {self.sim.data.body_xpos[self.sim.model.body_name2id(cloth_id)]}")
         self._grasp()
         last_obs = self._lift()
         if self._check_success():
@@ -396,7 +407,7 @@ class UnfoldCloth(SingleArmEnv):
 
     def _grasp_imp(self):
         last_obs = None
-        for i in range(10):
+        for i in range(50):
             obs, reward, done, _ = self.step([0, 0, 0, 0, 0, 0, self.grasp_state])
             if not self.headless:
                 self.render()
@@ -416,7 +427,8 @@ class UnfoldCloth(SingleArmEnv):
             return object_height > table_height + 0.04
         else:
             cloth_original_height = self.cloth_body_pos[2]
-            cloth_current_height = self.sim.data.body_xpos[self.sim.model.body_name2id(f"cloth_{self.cloth_body_id}")][2]
+            cloth_current_height = self.sim.data.body_xpos[self.sim.model.body_name2id(f"cloth_{self.cloth_body_id}")][
+                2]
             return cloth_current_height > cloth_original_height + lift_height
 
     def _get_current_eef_pose(self):
