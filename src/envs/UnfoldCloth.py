@@ -19,18 +19,24 @@ from src.trajectory_follower import TrajectoryFollower
 
 from dm_robotics.transformations import transformations as tr
 
+from mujoco import mj_contactForce, mj_isPyramidal
+
 n_bodies_to_asset_file = {
+    1: "baked_1.xml",
     25: "baked_25.xml",
     50: "baked_50.xml",
     100: "baked_100.xml",
-    200: "baked_200.xml"
+    200: "baked_200.xml",
+    600: "baked_600.xml"
 }
 
 n_bodies_to_vertices = {
+    1:   [0, 9, 40, 49],
     25:  [0, 4, 20, 24],
     50:  [0, 9, 40, 49],
     100: [0, 10, 90, 99],
-    200: [0, 9, 190, 199]
+    200: [0, 9, 190, 199],
+    600: [0, 29, 569, 599]
 }
 
 class UnfoldCloth(SingleArmEnv):
@@ -436,7 +442,7 @@ class UnfoldCloth(SingleArmEnv):
             cloth_original_height = self.cloth_body_pos[2]
             cloth_current_height = self.sim.data.body_xpos[self.sim.model.body_name2id(f"cloth_{self.cloth_body_id}")][
                 2]
-            return cloth_current_height > cloth_original_height + lift_height
+            return cloth_current_height > cloth_original_height # + lift_height
 
     def _get_current_eef_pose(self):
         current_obs = self._get_observations()

@@ -11,6 +11,8 @@ import robosuite.utils.transform_utils as rtu
 from robosuite.controllers import load_controller_config
 from dm_robotics.transformations import transformations as tr
 
+import modern_robotics as mr
+
 
 def get_random_angle(a, b):
     theta_deg = (b - a) * np.random.sample() + a
@@ -80,7 +82,9 @@ def main(n_cloth, n, debug, show_sites, headless, label):
                 env.render()
 
             if show_sites:
-                env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_SITE
+                # env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_CONTACT
+                # env.sim._render_context_offscreen.vopt.flags = mujoco.mjtVisFlag.mjVIS_CONTACTPOINT
+                env.sim._render_context_offscreen.vopt.flags = mujoco.mjtVisFlag.mjVIS_CONTACTFORCE
 
             if label:
                 env.sim._render_context_offscreen.vopt.label = mujoco.mjtLabel.mjLABEL_BODY
@@ -110,6 +114,23 @@ def main(n_cloth, n, debug, show_sites, headless, label):
                                                  tr.quat_to_mat(initial_state["cube_quat"])[:-1, :-1])
 
             optimal_pick_object_pose, angle = optimal_grasp(pick_object_pose)
+
+            # joint moves for cloth 100
+            # dest_jnt_traj(env, start_qpos=env.robots[0].recent_qpos.current,
+            #               dest_qpos=[-0.375, 0.646, 0.056, -2.357, 0.012, 3.22, 0.427], headless=headless)
+            # dest_jnt_traj(env, start_qpos=[-0.375, 0.646, 0.056, -2.357, 0.012, 3.22, 0.427],
+            #               dest_qpos=[-0.366,  0.858,  0.018, -2.24,  -0.14,   3.315,  0.557], headless=headless)
+            # env._grasp()
+            # env._lift()
+            #
+            # # joint moves for cloth 600
+            # dest_jnt_traj(env, start_qpos=env.robots[0].recent_qpos.current, dest_qpos=[-0.182,  0.722,  0.021, -2.274,  0.01,   3.218,  0.632])
+            # dest_jnt_traj(env, start_qpos=[-0.182,  0.722,  0.021, -2.274,  0.01,   3.218,  0.632], dest_qpos=[-0.184,  0.928,  0.011, -2.15,  -0.046,  3.299,  0.677])
+            # env._grasp()
+            # dest_jnt_traj(env, start_qpos=[-0.184,  0.928,  0.011, -2.15,  -0.046,  3.299,  0.677], dest_qpos=[-0.09,   0.347, -0.054, -2.39,   0.14,   2.959,  0.536])
+
+            # success = env._check_success()
+
             last_obs, success = env.pick(optimal_pick_object_pose)
 
             if success:
@@ -126,10 +147,20 @@ def main(n_cloth, n, debug, show_sites, headless, label):
                 logging.error("Failed to grasp. This run will not do anything")
 
             env.go_home()
+            # dest_jnt_traj(env, start_qpos=[-0.134,  0.268, -0.13,  -2.461,  0.256,  2.942,  0.271],
+            #               dest_qpos=env.robots[0].init_qpos, headless=headless)
 
             cv2.waitKey(1000)
     finally:
         env.close()
+
+
+def dest_jnt_traj(env, start_qpos, dest_qpos, headless):
+    j_traj = mr.JointTrajectory(start_qpos, dest_qpos, 5, 100, 5)
+    for jnt in j_traj:
+        env.robots[0].set_robot_joint_positions(jnt)
+        if not headless:
+            env.render()
 
 
 def optimal_grasp(pick_object_pose):

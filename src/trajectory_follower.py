@@ -72,8 +72,8 @@ class TrajectoryFollower:
         self.logger.info(f"Trajectory took: {time.time() - start_time} s")
 
         # Get and print final tracking performance.
-        pos_error, angle_error = get_final_errors(destination_hmat, last_obs)
-        self.logger.info(f"Final angle error: {angle_error:.2f} deg")
-        self.logger.info(f"Final pos   error: {np.linalg.norm(pos_error):.3f}")
+        # pos_error, angle_error = get_final_errors(destination_hmat, last_obs)
+        # self.logger.debug(f"Final angle error: {angle_error:.2f} deg")
+        # self.logger.debug(f"Final pos   error: {np.linalg.norm(pos_error):.3f}")
 
         return last_obs
