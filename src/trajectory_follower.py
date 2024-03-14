@@ -31,8 +31,8 @@ class TrajectoryFollower:
     def __init__(self, env, logger, headless=False):
         self.env = env
         self.logger = logger
-        self.p_gain = 20
-        self.ang_gain = 2.8
+        self.p_gain = 19
+        self.ang_gain = 2.2
         self.headless = headless
 
     def follow(self, destination_hmat, eef_init_pose, grasp_action):
@@ -69,7 +69,7 @@ class TrajectoryFollower:
             current_eef_position = last_obs['robot0_eef_pos']
             current_eef_quat = last_obs['robot0_eef_quat']
 
-        self.logger.info(f"Trajectory took: {time.time() - start_time} s")
+        self.logger.debug(f"Trajectory took: {time.time() - start_time} s")
 
         # Get and print final tracking performance.
         # pos_error, angle_error = get_final_errors(destination_hmat, last_obs)

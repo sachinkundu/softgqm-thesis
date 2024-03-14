@@ -4,6 +4,7 @@ import time
 import click
 import mujoco
 import logging
+import itertools
 from src.envs import UnfoldCloth
 import robosuite.utils.camera_utils as rcu
 from robosuite.utils.input_utils import *
@@ -67,92 +68,93 @@ def main(n_cloth, n, debug, show_sites, headless, label):
         headless=headless
     )
 
-    try:
-        for run_no in range(n):
+    for run_no in range(n):
 
-            logging.info("############################")
-            logging.info(f"Trial No: {run_no + 1}")
-            logging.info("############################")
+        try:
+            combinations = itertools.product(['x', 'y'], [-np.pi/6, 0, np.pi/6])
+            combinations = [(ax, ang) for ax, ang in combinations if ax == 'x' or ang != 0]
+            for (axis, grasp_orientation) in combinations:
+                initial_state = env.reset()
 
-            initial_state = env.reset()
+                if not headless:
+                    agent_view_camera_id = env.sim.model.camera_name2id(camera_to_use)
+                    env.viewer.set_camera(camera_id=agent_view_camera_id)
+                    env.render()
 
-            if not headless:
-                agent_view_camera_id = env.sim.model.camera_name2id(camera_to_use)
-                env.viewer.set_camera(camera_id=agent_view_camera_id)
-                env.render()
+                if show_sites:
+                    # env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_CONTACT
+                    env.sim._render_context_offscreen.vopt.flags = mujoco.mjtVisFlag.mjVIS_CONTACTPOINT
+                    # env.sim._render_context_offscreen.vopt.flags = mujoco.mjtVisFlag.mjVIS_CONTACTFORCE
 
-            if show_sites:
-                # env.sim._render_context_offscreen.vopt.frame = mujoco.mjtFrame.mjFRAME_CONTACT
-                # env.sim._render_context_offscreen.vopt.flags = mujoco.mjtVisFlag.mjVIS_CONTACTPOINT
-                env.sim._render_context_offscreen.vopt.flags = mujoco.mjtVisFlag.mjVIS_CONTACTFORCE
+                if label:
+                    env.sim._render_context_offscreen.vopt.label = mujoco.mjtLabel.mjLABEL_BODY
 
-            if label:
-                env.sim._render_context_offscreen.vopt.label = mujoco.mjtLabel.mjLABEL_BODY
+                if cloth:
+                    start = time.time()
+                    while time.time() < start + 10:
+                        action = np.zeros(shape=(env.action_dim,))
+                        action[-1] = -1
+                        env.step(action)
+                        if not headless:
+                            env.render()
 
-            if cloth:
-                start = time.time()
-                while time.time() < start + 10:
-                    action = np.zeros(shape=(env.action_dim,))
-                    action[-1] = -1
-                    env.step(action)
-                    if not headless:
-                        env.render()
+                    cloth_id = get_highest_cloth_body(env, n_cloth)
+                    cloth_body_pos = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
+                    cloth_body_quat = env.sim.data.body_xquat[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
 
-                cloth_id = get_highest_cloth_body(env, n_cloth)
-                cloth_body_pos = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
-                cloth_body_quat = env.sim.data.body_xquat[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
+                    logging.info(f"cloth_body_pos after settling: {cloth_body_pos}")
 
-                logging.info(f"cloth_body_pos after settling: {cloth_body_pos}")
+                    env.set_cloth_body_id(cloth_id)
 
-                env.set_cloth_body_id(cloth_id)
+                    pick_object_pose = rtu.make_pose(cloth_body_pos, tr.quat_to_mat(cloth_body_quat)[:-1, :-1])
+                else:
+                    pick_object_pose = rtu.make_pose(pixels_to_world(fake_policy(initial_state,
+                                                                                 camera_to_use, env, cloth, headless),
+                                                                     initial_state, camera_to_use, env),
+                                                     tr.quat_to_mat(initial_state["cube_quat"])[:-1, :-1])
 
-                pick_object_pose = rtu.make_pose(cloth_body_pos, tr.quat_to_mat(cloth_body_quat)[:-1, :-1])
-            else:
-                pick_object_pose = rtu.make_pose(pixels_to_world(fake_policy(initial_state,
-                                                                             camera_to_use, env, cloth, headless),
-                                                                 initial_state, camera_to_use, env),
-                                                 tr.quat_to_mat(initial_state["cube_quat"])[:-1, :-1])
+                optimal_pick_object_pose = optimal_grasp(pick_object_pose, axis, grasp_orientation)
 
-            optimal_pick_object_pose, angle = optimal_grasp(pick_object_pose)
+                # joint moves for cloth 100
+                # dest_jnt_traj(env, start_qpos=env.robots[0].recent_qpos.current,
+                #               dest_qpos=[-0.375, 0.646, 0.056, -2.357, 0.012, 3.22, 0.427], headless=headless)
+                # dest_jnt_traj(env, start_qpos=[-0.375, 0.646, 0.056, -2.357, 0.012, 3.22, 0.427],
+                #               dest_qpos=[-0.366,  0.858,  0.018, -2.24,  -0.14,   3.315,  0.557], headless=headless)
+                # env._grasp()
+                # env._lift()
+                #
+                # # joint moves for cloth 600
+                # dest_jnt_traj(env, start_qpos=env.robots[0].recent_qpos.current, dest_qpos=[-0.182,  0.722,  0.021, -2.274,  0.01,   3.218,  0.632])
+                # dest_jnt_traj(env, start_qpos=[-0.182,  0.722,  0.021, -2.274,  0.01,   3.218,  0.632], dest_qpos=[-0.184,  0.928,  0.011, -2.15,  -0.046,  3.299,  0.677])
+                # env._grasp()
+                # dest_jnt_traj(env, start_qpos=[-0.184,  0.928,  0.011, -2.15,  -0.046,  3.299,  0.677], dest_qpos=[-0.09,   0.347, -0.054, -2.39,   0.14,   2.959,  0.536])
 
-            # joint moves for cloth 100
-            # dest_jnt_traj(env, start_qpos=env.robots[0].recent_qpos.current,
-            #               dest_qpos=[-0.375, 0.646, 0.056, -2.357, 0.012, 3.22, 0.427], headless=headless)
-            # dest_jnt_traj(env, start_qpos=[-0.375, 0.646, 0.056, -2.357, 0.012, 3.22, 0.427],
-            #               dest_qpos=[-0.366,  0.858,  0.018, -2.24,  -0.14,   3.315,  0.557], headless=headless)
-            # env._grasp()
-            # env._lift()
-            #
-            # # joint moves for cloth 600
-            # dest_jnt_traj(env, start_qpos=env.robots[0].recent_qpos.current, dest_qpos=[-0.182,  0.722,  0.021, -2.274,  0.01,   3.218,  0.632])
-            # dest_jnt_traj(env, start_qpos=[-0.182,  0.722,  0.021, -2.274,  0.01,   3.218,  0.632], dest_qpos=[-0.184,  0.928,  0.011, -2.15,  -0.046,  3.299,  0.677])
-            # env._grasp()
-            # dest_jnt_traj(env, start_qpos=[-0.184,  0.928,  0.011, -2.15,  -0.046,  3.299,  0.677], dest_qpos=[-0.09,   0.347, -0.054, -2.39,   0.14,   2.959,  0.536])
+                # success = env._check_success()
+                logging.info("############################")
+                logging.info(f"Axis: {axis} Orientation: {np.rad2deg(grasp_orientation):.2f}")
+                env.pick(optimal_pick_object_pose, axis, grasp_orientation)
+                logging.info("############################")
 
-            # success = env._check_success()
+                # if success:
+                #     initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
+                #     new_ori = optimal_place(angle, initial_pick_pose_angle, last_obs, pick_object_pose)
+                #
+                #     last_obs, reward = env.place(new_ori)
+                #
+                #     logging.info(f"Reward: {reward}")
+                #
+                #     if not cloth:
+                #         logging.info(f"cube angle at {np.rad2deg(tr.quat_to_euler(last_obs['cube_quat']))}")
+                # else:
+                #     logging.error("Failed to grasp. This run will not do anything")
 
-            last_obs, success = env.pick(optimal_pick_object_pose)
+                env.go_home()
+                # dest_jnt_traj(env, start_qpos=[-0.134,  0.268, -0.13,  -2.461,  0.256,  2.942,  0.271],
+                #               dest_qpos=env.robots[0].init_qpos, headless=headless)
 
-            if success:
-                initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
-                new_ori = optimal_place(angle, initial_pick_pose_angle, last_obs, pick_object_pose)
-
-                last_obs, reward = env.place(new_ori)
-
-                logging.info(f"Reward: {reward}")
-
-                if not cloth:
-                    logging.info(f"cube angle at {np.rad2deg(tr.quat_to_euler(last_obs['cube_quat']))}")
-            else:
-                logging.error("Failed to grasp. This run will not do anything")
-
-            env.go_home()
-            # dest_jnt_traj(env, start_qpos=[-0.134,  0.268, -0.13,  -2.461,  0.256,  2.942,  0.271],
-            #               dest_qpos=env.robots[0].init_qpos, headless=headless)
-
-            cv2.waitKey(1000)
-    finally:
-        env.close()
+                cv2.waitKey(1000)
+        finally:
+            env.close()
 
 
 def dest_jnt_traj(env, start_qpos, dest_qpos, headless):
@@ -163,11 +165,15 @@ def dest_jnt_traj(env, start_qpos, dest_qpos, headless):
             env.render()
 
 
-def optimal_grasp(pick_object_pose):
-    angle = get_random_angle(-45, -30)
-    pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1],
-                                           tr.rotation_y_axis(np.array([0]), full=False))
-    return pick_object_pose, angle
+def optimal_grasp(pick_object_pose, axis, angle):
+    if axis == 'y':
+        pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1],
+                                               tr.rotation_y_axis(np.array([angle]), full=False))
+    elif axis == 'x':
+        pick_object_pose[:-1, :-1] = np.matmul(pick_object_pose[:-1, :-1],
+                                               tr.rotation_x_axis(np.array([angle]), full=False))
+
+    return pick_object_pose
 
 
 def pixels_to_world(pixels, state, camera_name, env):
@@ -186,7 +192,7 @@ def pixels_to_world(pixels, state, camera_name, env):
         depth_map=depth_map,
         camera_to_world_transform=camera_to_world,
     )
-    logging.info(f"estimated_obj_pos: {estimated_obj_pos}")
+    logging.debug(f"estimated_obj_pos: {estimated_obj_pos}")
     return estimated_obj_pos
 
 
@@ -216,7 +222,7 @@ def get_highest_cloth_body(env, n_bodies):
 
     for i in range(n_bodies):
         current_cloth_body_height = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{i}")][2]
-        logging.info(f"highest_height: {current_cloth_body_height}, i: {i} , highest_body: {highest_body}")
+        logging.debug(f"highest_height: {current_cloth_body_height}, i: {i} , highest_body: {highest_body}")
         if current_cloth_body_height > highest_height:
             highest_height = current_cloth_body_height
             highest_body = i

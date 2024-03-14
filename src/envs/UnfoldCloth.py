@@ -225,9 +225,9 @@ class UnfoldCloth(SingleArmEnv):
                 self.placement_initializer = UniformRandomSampler(
                     name="ObjectSampler",
                     mujoco_objects=mujoco_objects,
-                    x_range=[0, 0.15],
-                    y_range=[-0.2, 0.2],
-                    rotation=(-np.pi / 4, np.pi / 4),
+                    x_range=[0.15, 0.15],
+                    y_range=[-0.1, -0.1],
+                    rotation=np.pi / 4,
                     rotation_axis='z',
                     ensure_object_boundary_in_range=False,
                     ensure_valid_placement=True,
@@ -359,27 +359,51 @@ class UnfoldCloth(SingleArmEnv):
             if vis_settings["grippers"]:
                 self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
-    def pick(self, pick_pose):
+    def calculate_wrench_space(self):
+        left_finger_id = self.sim.model.geom_name2id('gripper0_finger1_collision')
+        right_finger_id = self.sim.model.geom_name2id('gripper0_finger2_collision')
+
+        left_finger_mask = ((self.sim.data.contact.geom[:, 0] == left_finger_id) | (self.sim.data.contact.geom[:, 1] == left_finger_id))
+        left_contact_points = np.nonzero(left_finger_mask)
+
+        right_finger_mask = ((self.sim.data.contact.geom[:, 0] == right_finger_id) | (self.sim.data.contact.geom[:, 1] == right_finger_id))
+        right_contact_points = np.nonzero(right_finger_mask)
+
+        self.logger.info("6D Left Wrenches")
+        for left_contact_point in left_contact_points[0]:
+            contact_force = np.zeros(shape=(6, 1), dtype=np.float64)
+            mj_contactForce(self.sim.model._model, self.sim.data._data, left_contact_point, contact_force)
+            self.logger.info(f"idx {left_contact_point} - {[f'{el:.2f}' for el in contact_force.T.tolist()[0]]}")
+
+        self.logger.info("6D Right Wrenches")
+        for right_contact_point in right_contact_points[0]:
+            contact_force = np.zeros(shape=(6, 1), dtype=np.float64)
+            mj_contactForce(self.sim.model._model, self.sim.data._data, right_contact_point, contact_force)
+            self.logger.info(f"idx {right_contact_point} - {[f'{el:.2f}' for el in contact_force.T.tolist()[0]]}")
+
+    def pick(self, pick_pose, axis, angle):
         """
         Pick the object at pick pose, can fail to grasp. Let the caller know so they can decide what to do.
         """
         self.done = False
         self._hover(pick_pose)
-        if self.include_cloth:
-            cloth_id = f"cloth_{self.cloth_body_id}"
-            self.logger.info(
-                f"cloth_body_pos after hover: {self.sim.data.body_xpos[self.sim.model.body_name2id(cloth_id)]}")
         self._lift(height=-0.07)
-        if self.include_cloth:
-            cloth_id = f"cloth_{self.cloth_body_id}"
-            self.logger.info(
-                f"cloth_body_pos after lift down: {self.sim.data.body_xpos[self.sim.model.body_name2id(cloth_id)]}")
-        self._grasp()
-        last_obs = self._lift()
-        if self._check_success():
-            return last_obs, True
-        else:
-            return None, False
+        last_obs = self._grasp()
+
+        import matplotlib.pyplot as plt
+        plt.imshow(last_obs['robot0_robotview_image'])
+        plt.text(200, 25, f"{axis}: {np.rad2deg(angle)}", fontsize=12)
+        plt.show()
+
+        self.calculate_wrench_space()
+
+        self._ungrasp()
+        # self._lift(height=0.07)
+        # last_obs = self._lift()
+        # if self._check_success():
+        #     return last_obs, True
+        # else:
+        #     return None, False
 
     def place(self, place_hmat):
         eef_init_pose = self._get_current_eef_pose()
@@ -405,7 +429,7 @@ class UnfoldCloth(SingleArmEnv):
 
     def _lift(self, height=0.2):
         eef_pose = self._get_current_eef_pose()
-        self.logger.info("lift " + ("up" if height > 0 else "down"))
+        self.logger.debug("lift " + ("up" if height > 0 else "down"))
         lift_pose = rtu.make_pose(eef_pose[:-1, -1] + [0, 0, height], eef_pose[:-1, :-1])
         return self.trajectory_follower.follow(lift_pose, eef_pose, self.grasp_state)
 
