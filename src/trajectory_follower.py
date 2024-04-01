@@ -32,7 +32,7 @@ class TrajectoryFollower:
         self.env = env
         self.logger = logger
         self.p_gain = 19
-        self.ang_gain = 2.2
+        self.ang_gain = 1.8
         self.headless = headless
 
     def follow(self, destination_hmat, eef_init_pose, grasp_action):

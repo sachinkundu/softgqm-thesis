@@ -17,7 +17,7 @@
         <body>
             <body name="object" pos="0 0 0.1">
                 <flexcomp type="grid" count="10 5 1" spacing=".025 .025 .025" mass="0.5"
-                          name="cloth" radius="0.001">
+                          name="cloth" radius="0.001" rgba="256 0 0 0.3">
                      <contact condim="3" solref="0.01 1" solimp=".95 .99 .0001" selfcollide="none"/>
                     <edge equality="true" damping="1.0"/>
                     <plugin plugin="mujoco.elasticity.shell">

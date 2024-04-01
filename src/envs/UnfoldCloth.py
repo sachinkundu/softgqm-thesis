@@ -1,8 +1,10 @@
+import cv2
 import numpy as np
 from pathlib import Path
 from collections import OrderedDict
 
 from typing import List
+import matplotlib.pyplot as plt
 
 import modern_robotics as mr
 from robosuite.models.arenas import TableArena
@@ -19,10 +21,11 @@ from src.trajectory_follower import TrajectoryFollower
 
 from dm_robotics.transformations import transformations as tr
 
-from mujoco import mj_contactForce, mj_isPyramidal
+from mujoco import mj_contactForce, mj_isPyramidal, mju_encodePyramid
 
 n_bodies_to_asset_file = {
     1: "baked_1.xml",
+    22: "baked_22.xml",
     25: "baked_25.xml",
     50: "baked_50.xml",
     100: "baked_100.xml",
@@ -31,13 +34,15 @@ n_bodies_to_asset_file = {
 }
 
 n_bodies_to_vertices = {
-    1:   [0, 9, 40, 49],
-    25:  [0, 4, 20, 24],
-    50:  [0, 9, 40, 49],
+    1: [0, 9, 40, 49],
+    22: [0, 4, 20, 24],
+    25: [0, 4, 20, 24],
+    50: [0, 9, 40, 49],
     100: [0, 10, 90, 99],
     200: [0, 9, 190, 199],
     600: [0, 29, 569, 599]
 }
+
 
 class UnfoldCloth(SingleArmEnv):
     """
@@ -47,7 +52,8 @@ class UnfoldCloth(SingleArmEnv):
     def __init__(
             self,
             robots,
-            n_cloth,
+            n_cloth=0,
+            data=False,
             env_configuration="default",
             controller_configs=None,
             gripper_types="default",
@@ -76,7 +82,6 @@ class UnfoldCloth(SingleArmEnv):
             camera_segmentations=None,  # {None, instance, class, element}
             renderer="mujoco",
             renderer_config=None,
-            include_cloth=False,
             logger=None,
             headless=False
     ):
@@ -95,8 +100,10 @@ class UnfoldCloth(SingleArmEnv):
         # object placement initializer
         self.placement_initializer = placement_initializer
 
+        self.data = data
         self.n_cloth = n_cloth
-        self.include_cloth = include_cloth
+        self.cloth_sim = True if n_cloth > 0 else False
+        self.cube_sim = not self.cloth_sim
         self.logger = logger
         self.grasp_state = -1  # Not grasping to start with
         self.headless = headless
@@ -139,7 +146,7 @@ class UnfoldCloth(SingleArmEnv):
         self.cloth_body_id = body_id
 
     def reward(self, action=None):
-        if self.include_cloth:
+        if self.cloth_sim:
             if self.done:
                 bottom_left = self.sim.data.body_xpos[
                     self.sim.model.body_name2id(f"cloth_{self.cloth_corner_vertices[0]}")]
@@ -210,7 +217,7 @@ class UnfoldCloth(SingleArmEnv):
 
         # initialize objects of interest
 
-        if self.include_cloth:
+        if self.cloth_sim:
             self.cloth = self._create_cloth()
             mujoco_objects: List[MujocoObject] = np.array([self.cloth])
         else:
@@ -255,7 +262,7 @@ class UnfoldCloth(SingleArmEnv):
         super()._setup_references()
 
         # Additional object references from this env
-        if not self.include_cloth:
+        if self.cube_sim:
             self.cube_body_id = self.sim.model.body_name2id(self.cube.root_body)
 
     def _setup_observables(self):
@@ -274,7 +281,7 @@ class UnfoldCloth(SingleArmEnv):
             modality = "object"
 
             sensors = []
-            if self.include_cloth:
+            if self.cloth_sim:
                 @sensor(modality=modality)
                 def cloth_pos(obs_cache):
                     return np.array(self.sim.data.body_xpos[self.cloth_body_id])
@@ -284,7 +291,7 @@ class UnfoldCloth(SingleArmEnv):
                     return np.array(self.sim.data.body_xquat[self.cloth_body_id])
 
                 sensors.extend([cloth_pos, cloth_quat])
-            else:
+            if self.cube_sim:
                 # cube-related observables
                 @sensor(modality=modality)
                 def cube_pos(obs_cache):
@@ -350,7 +357,7 @@ class UnfoldCloth(SingleArmEnv):
                 options specified.
         """
         # Run superclass method first
-        if not self.include_cloth:
+        if not self.cloth_sim:
             vis_settings["grippers"] = True
 
             super().visualize(vis_settings=vis_settings)
@@ -359,29 +366,59 @@ class UnfoldCloth(SingleArmEnv):
             if vis_settings["grippers"]:
                 self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
+    def get_contact_point_idxs(self, finger):
+        finger_id = self.sim.model.geom_name2id(f"gripper0_finger{finger}_collision")
+        finger_mask = ((self.sim.data.contact.geom[:, 0] == finger_id) | (
+                self.sim.data.contact.geom[:, 1] == finger_id))
+        contact_points_idxs = np.nonzero(finger_mask)
+        return contact_points_idxs
+
+    def get_contact_dim(self):
+        contact_points = self.get_contact_point_idxs(1)
+        # All the contacts have the same dimension
+        return self.sim.data.contact.dim[contact_points][0] if contact_points[0].size > 0 else -1
+
     def calculate_wrench_space(self):
-        left_finger_id = self.sim.model.geom_name2id('gripper0_finger1_collision')
-        right_finger_id = self.sim.model.geom_name2id('gripper0_finger2_collision')
-
-        left_finger_mask = ((self.sim.data.contact.geom[:, 0] == left_finger_id) | (self.sim.data.contact.geom[:, 1] == left_finger_id))
-        left_contact_points = np.nonzero(left_finger_mask)
-
-        right_finger_mask = ((self.sim.data.contact.geom[:, 0] == right_finger_id) | (self.sim.data.contact.geom[:, 1] == right_finger_id))
-        right_contact_points = np.nonzero(right_finger_mask)
-
-        self.logger.info("6D Left Wrenches")
-        for left_contact_point in left_contact_points[0]:
+        contact_points_idxs = np.append(self.get_contact_point_idxs(1), self.get_contact_point_idxs(2))
+        contact_wrenches = np.zeros(shape=(6, len(contact_points_idxs)))
+        for i, point_idx in enumerate(contact_points_idxs):
             contact_force = np.zeros(shape=(6, 1), dtype=np.float64)
-            mj_contactForce(self.sim.model._model, self.sim.data._data, left_contact_point, contact_force)
-            self.logger.info(f"idx {left_contact_point} - {[f'{el:.2f}' for el in contact_force.T.tolist()[0]]}")
+            mj_contactForce(self.sim.model._model, self.sim.data._data, point_idx, contact_force)
 
-        self.logger.info("6D Right Wrenches")
-        for right_contact_point in right_contact_points[0]:
-            contact_force = np.zeros(shape=(6, 1), dtype=np.float64)
-            mj_contactForce(self.sim.model._model, self.sim.data._data, right_contact_point, contact_force)
-            self.logger.info(f"idx {right_contact_point} - {[f'{el:.2f}' for el in contact_force.T.tolist()[0]]}")
+            contact_frame = self.sim.data.contact.frame[point_idx].reshape(3, 3).T
+            contact_force_copy = contact_force.copy()
+            force_in_wc = np.matmul(contact_frame, contact_force_copy[:3])
+            torque_in_wc = np.matmul(contact_frame, contact_force_copy[3:])
+            contact_force_in_wc = np.vstack((force_in_wc, torque_in_wc))
 
-    def pick(self, pick_pose, axis, angle):
+            contact_wrenches[:, i] = contact_force_in_wc.T
+            self.logger.debug(f"idx {point_idx} - {[f'{el:.2f}' for el in contact_force_in_wc.T.tolist()[0]]}")
+
+            # contact_wrenches[:, i] = contact_force.copy().T
+
+        return contact_wrenches
+
+    def dump_contact_data(self, axis, angle, output_folder, n_cloth, last_obs, camera_names):
+        Path.mkdir(output_folder, exist_ok=True)
+        contact = self.sim.data.contact
+        contact_wrenches = self.calculate_wrench_space()
+        contact_df = {
+            'dim': self.get_contact_dim(),
+            'pos': contact.pos,
+            'geom': contact.geom,
+            'forces': contact_wrenches,
+        }
+        file_path = Path(output_folder / f"{n_cloth}_{axis}_{np.rad2deg(angle):.0f}.npy")
+        np.save(file_path, contact_df)
+
+        for camera in camera_names:
+            image_path = Path(output_folder / f"{self.n_cloth}_{axis}_{np.rad2deg(angle):.0f}_{camera}.png")
+            plt.text(25, 225, f"{axis}: {np.rad2deg(angle):.0f}", fontsize=12)
+            plt.imshow(last_obs[f"{camera}_image"], origin="lower")
+            plt.savefig(image_path, bbox_inches='tight')
+            plt.close()
+
+    def pick(self, pick_pose, axis, angle, output_folder):
         """
         Pick the object at pick pose, can fail to grasp. Let the caller know so they can decide what to do.
         """
@@ -390,12 +427,9 @@ class UnfoldCloth(SingleArmEnv):
         self._lift(height=-0.07)
         last_obs = self._grasp()
 
-        import matplotlib.pyplot as plt
-        plt.imshow(last_obs['robot0_robotview_image'])
-        plt.text(200, 25, f"{axis}: {np.rad2deg(angle)}", fontsize=12)
-        plt.show()
-
-        self.calculate_wrench_space()
+        if self.data:
+            self.dump_contact_data(axis, angle, output_folder, self.n_cloth, last_obs, self.camera_names)
+        cv2.waitKey(1000)
 
         self._ungrasp()
         # self._lift(height=0.07)
@@ -458,7 +492,7 @@ class UnfoldCloth(SingleArmEnv):
         Returns:
             bool: True if cube has been lifted
         """
-        if not self.include_cloth:
+        if self.cube_sim:
             object_height = self.sim.data.body_xpos[self.cube_body_id][2]
             table_height = self.model.mujoco_arena.table_offset[2]
             return object_height > table_height + 0.04
@@ -466,7 +500,7 @@ class UnfoldCloth(SingleArmEnv):
             cloth_original_height = self.cloth_body_pos[2]
             cloth_current_height = self.sim.data.body_xpos[self.sim.model.body_name2id(f"cloth_{self.cloth_body_id}")][
                 2]
-            return cloth_current_height > cloth_original_height # + lift_height
+            return cloth_current_height > cloth_original_height  # + lift_height
 
     def _get_current_eef_pose(self):
         current_obs = self._get_observations()

@@ -1,18 +1,22 @@
-import math
-import cv2
-import time
-import click
-import mujoco
-import logging
 import itertools
-from src.envs import UnfoldCloth
-import robosuite.utils.camera_utils as rcu
-from robosuite.utils.input_utils import *
-import robosuite.utils.transform_utils as rtu
-from robosuite.controllers import load_controller_config
-from dm_robotics.transformations import transformations as tr
+import logging
+import math
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
 
+import click
+import cv2
 import modern_robotics as mr
+import mujoco
+import robosuite.utils.camera_utils as rcu
+import robosuite.utils.transform_utils as rtu
+from dm_robotics.transformations import transformations as tr
+from robosuite.controllers import load_controller_config
+from robosuite.utils.input_utils import *
+
+from src.envs import UnfoldCloth
 
 
 def get_random_angle(a, b):
@@ -20,26 +24,8 @@ def get_random_angle(a, b):
     return np.deg2rad(theta_deg)
 
 
-@click.command()
-@click.option('--n-cloth', default=0, help="include cloth in sim")
-@click.option('--n', default=1, show_default=True, help="number of simulation runs")
-@click.option('--debug', is_flag=True, default=False, show_default=True, help="debug logging")
-@click.option('--show-sites', is_flag=True, default=False, help="include cloth in sim")
-@click.option('--headless', is_flag=True, default=False, help="Run without rendering")
-@click.option('--label', is_flag=True, default=False, help="Show body labels")
-def main(n_cloth, n, debug, show_sites, headless, label):
-    log_level = logging.DEBUG if debug else logging.INFO
-    logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
-
-    cloth = True if n_cloth > 0 else False
-
-    # Create dict to hold options that will be passed to env creation call
-    options = {
-        "robots": "Panda",
-        "env_name": UnfoldCloth.__name__.split(".")[-1],
-        "n_cloth": n_cloth
-    }
-
+def run(options, headless=False, n_trials=1, show_sites=False, label=False, cloth=False):
+    now = datetime.now().strftime("%d%m%Y-%H%M%S")
     # Choose controller
     controller_name = "OSC_POSE"
 
@@ -60,18 +46,23 @@ def main(n_cloth, n, debug, show_sites, headless, label):
         ignore_done=True,
         use_camera_obs=True,
         control_freq=2,
-        include_cloth=True if n_cloth > 0 else False,
         logger=logging.getLogger(__name__),
         camera_depths=True,
-        camera_names=camera_to_use,
+        camera_names=[camera_to_use, 'sideview', 'robot0_eye_in_hand'],
+        render_camera=camera_to_use,
         camera_segmentations="element",  # {None, instance, class, element}
         headless=headless
     )
 
-    for run_no in range(n):
+    for run_no in range(n_trials):
 
         try:
-            combinations = itertools.product(['x', 'y'], [-np.pi/6, 0, np.pi/6])
+            if 'data' in options:
+                angles = np.arange(-np.pi / 6, np.pi / 6 + np.pi / 18, step=np.pi / 18)
+            else:
+                angles = [0]
+
+            combinations = itertools.product(['x', 'y'], angles)
             combinations = [(ax, ang) for ax, ang in combinations if ax == 'x' or ang != 0]
             for (axis, grasp_orientation) in combinations:
                 initial_state = env.reset()
@@ -98,15 +89,19 @@ def main(n_cloth, n, debug, show_sites, headless, label):
                         if not headless:
                             env.render()
 
-                    cloth_id = get_highest_cloth_body(env, n_cloth)
+                    cloth_id = get_highest_cloth_body(env, options['n_cloth'])
                     cloth_body_pos = env.sim.data.body_xpos[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
                     cloth_body_quat = env.sim.data.body_xquat[env.sim.model.body_name2id(f"cloth_{cloth_id}")]
 
-                    logging.info(f"cloth_body_pos after settling: {cloth_body_pos}")
+                    logging.debug(f"cloth_body_pos after settling: {cloth_body_pos}")
 
                     env.set_cloth_body_id(cloth_id)
 
                     pick_object_pose = rtu.make_pose(cloth_body_pos, tr.quat_to_mat(cloth_body_quat)[:-1, :-1])
+                    logging.info("############################")
+                    logging.info(f"Cloth: {options['n_cloth']} Axis: {axis} Orientation: {np.rad2deg(grasp_orientation):.0f}")
+                    logging.info("############################")
+
                 else:
                     pick_object_pose = rtu.make_pose(pixels_to_world(fake_policy(initial_state,
                                                                                  camera_to_use, env, cloth, headless),
@@ -114,47 +109,66 @@ def main(n_cloth, n, debug, show_sites, headless, label):
                                                      tr.quat_to_mat(initial_state["cube_quat"])[:-1, :-1])
 
                 optimal_pick_object_pose = optimal_grasp(pick_object_pose, axis, grasp_orientation)
-
-                # joint moves for cloth 100
-                # dest_jnt_traj(env, start_qpos=env.robots[0].recent_qpos.current,
-                #               dest_qpos=[-0.375, 0.646, 0.056, -2.357, 0.012, 3.22, 0.427], headless=headless)
-                # dest_jnt_traj(env, start_qpos=[-0.375, 0.646, 0.056, -2.357, 0.012, 3.22, 0.427],
-                #               dest_qpos=[-0.366,  0.858,  0.018, -2.24,  -0.14,   3.315,  0.557], headless=headless)
-                # env._grasp()
-                # env._lift()
-                #
-                # # joint moves for cloth 600
-                # dest_jnt_traj(env, start_qpos=env.robots[0].recent_qpos.current, dest_qpos=[-0.182,  0.722,  0.021, -2.274,  0.01,   3.218,  0.632])
-                # dest_jnt_traj(env, start_qpos=[-0.182,  0.722,  0.021, -2.274,  0.01,   3.218,  0.632], dest_qpos=[-0.184,  0.928,  0.011, -2.15,  -0.046,  3.299,  0.677])
-                # env._grasp()
-                # dest_jnt_traj(env, start_qpos=[-0.184,  0.928,  0.011, -2.15,  -0.046,  3.299,  0.677], dest_qpos=[-0.09,   0.347, -0.054, -2.39,   0.14,   2.959,  0.536])
-
-                # success = env._check_success()
-                logging.info("############################")
-                logging.info(f"Axis: {axis} Orientation: {np.rad2deg(grasp_orientation):.2f}")
-                env.pick(optimal_pick_object_pose, axis, grasp_orientation)
-                logging.info("############################")
-
-                # if success:
-                #     initial_pick_pose_angle = tr.quat_to_euler(tr.hmat_to_pos_quat(pick_object_pose)[1])[-1]
-                #     new_ori = optimal_place(angle, initial_pick_pose_angle, last_obs, pick_object_pose)
-                #
-                #     last_obs, reward = env.place(new_ori)
-                #
-                #     logging.info(f"Reward: {reward}")
-                #
-                #     if not cloth:
-                #         logging.info(f"cube angle at {np.rad2deg(tr.quat_to_euler(last_obs['cube_quat']))}")
-                # else:
-                #     logging.error("Failed to grasp. This run will not do anything")
+                output_folder = Path(__file__).parent / "contact_data" / now
+                env.pick(optimal_pick_object_pose, axis, grasp_orientation, output_folder=output_folder)
 
                 env.go_home()
-                # dest_jnt_traj(env, start_qpos=[-0.134,  0.268, -0.13,  -2.461,  0.256,  2.942,  0.271],
-                #               dest_qpos=env.robots[0].init_qpos, headless=headless)
-
                 cv2.waitKey(1000)
         finally:
             env.close()
+
+
+@click.command()
+@click.option('--data', is_flag=True, default=False, help="collect data")
+@click.option('--cloth', is_flag=True, default=False, help="run cloth sim")
+@click.option('--kube', is_flag=True, default=False, help="run cube sim")
+@click.option('--n-cloth', default=0, help="include cloth in sim")
+@click.option('--n', default=1, show_default=True, help="number of simulation runs")
+@click.option('--debug', is_flag=True, default=False, show_default=True, help="debug logging")
+@click.option('--show-sites', is_flag=True, default=False, help="include cloth in sim")
+@click.option('--headless', is_flag=True, default=False, help="Run without rendering")
+@click.option('--label', is_flag=True, default=False, help="Show body labels")
+def main(data, cloth, kube, n_cloth, n, debug, show_sites, headless, label):
+    log_level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(format='%(asctime)s - %(message)s', level=log_level)
+
+    if cloth and not data and n_cloth == 0:
+        logging.critical("Cannot run cloth sim without also specifying what type of cloth")
+        sys.exit(-1)
+
+    if data and cloth:
+        for cloth_name in [25, 50, 100, 200]:
+            # Create dict to hold options that will be passed to env creation call
+            options = {
+                "robots": "Panda",
+                "env_name": UnfoldCloth.__name__.split(".")[-1],
+                "n_cloth": cloth_name,
+                "data": True
+            }
+            run(options, cloth=True, headless=headless)
+    elif data and kube:
+        options = {
+            "robots": "Panda",
+            "env_name": UnfoldCloth.__name__.split(".")[-1],
+            "data": True
+        }
+        run(options, headless=headless)
+    elif cloth:
+        options = {
+            "robots": "Panda",
+            "env_name": UnfoldCloth.__name__.split(".")[-1],
+            "n_cloth": n_cloth
+        }
+        run(options, cloth=True, headless=headless)
+    elif kube:
+        options = {
+            "robots": "Panda",
+            "env_name": UnfoldCloth.__name__.split(".")[-1],
+        }
+        run(options, headless=headless)
+    else:
+        logging.critical("No options specified for the run")
+        sys.exit(-1)
 
 
 def dest_jnt_traj(env, start_qpos, dest_qpos, headless):
