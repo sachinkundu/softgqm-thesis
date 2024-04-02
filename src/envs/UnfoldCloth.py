@@ -399,7 +399,6 @@ class UnfoldCloth(SingleArmEnv):
         return contact_wrenches
 
     def dump_contact_data(self, axis, angle, output_folder, n_cloth, last_obs, camera_names):
-        Path.mkdir(output_folder, exist_ok=True)
         contact = self.sim.data.contact
         contact_wrenches = self.calculate_wrench_space()
         contact_df = {

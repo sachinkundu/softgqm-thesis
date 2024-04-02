@@ -3,3 +3,6 @@ modern-robotics==1.1.1
 dm-robotics-transformations==0.6.0
 matplotlib==3.7.4
 robosuite==1.4.0
+termcolor
+h5py
+pynput
