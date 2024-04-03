@@ -110,6 +110,7 @@ def run(options, headless=False, n_trials=1, show_sites=False, label=False, clot
 
                 optimal_pick_object_pose = optimal_grasp(pick_object_pose, axis, grasp_orientation)
                 output_folder = Path(__file__).parent / "contact_data" / now
+                output_folder.mkdir(exist_ok=True, parents=True)
                 env.pick(optimal_pick_object_pose, axis, grasp_orientation, output_folder=output_folder)
 
                 env.go_home()
