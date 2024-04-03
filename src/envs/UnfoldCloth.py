@@ -398,14 +398,31 @@ class UnfoldCloth(SingleArmEnv):
 
         return contact_wrenches
 
+    def get_contact_frames(self):
+        contact_points_idxs = np.append(self.get_contact_point_idxs(1), self.get_contact_point_idxs(2))
+        return self.sim.data.contact.frame[contact_points_idxs]
+
+    def get_contact_geom(self):
+        contact_points_idxs = np.append(self.get_contact_point_idxs(1), self.get_contact_point_idxs(2))
+        return self.sim.data.contact.geom[contact_points_idxs]
+
+    def get_contact_pos(self):
+        contact_points_idxs = np.append(self.get_contact_point_idxs(1), self.get_contact_point_idxs(2))
+        return self.sim.data.contact.pos[contact_points_idxs]
+
+    def get_contact_mu(self):
+        contact_points_idxs = np.append(self.get_contact_point_idxs(1), self.get_contact_point_idxs(2))
+        return self.sim.data.contact.mu[contact_points_idxs]
+
     def dump_contact_data(self, axis, angle, output_folder, n_cloth, last_obs, camera_names):
-        contact = self.sim.data.contact
         contact_wrenches = self.calculate_wrench_space()
         contact_df = {
             'dim': self.get_contact_dim(),
-            'pos': contact.pos,
-            'geom': contact.geom,
+            'pos': self.get_contact_pos(),
+            'geom': self.get_contact_geom(),
             'forces': contact_wrenches,
+            'frame': self.get_contact_frames(),
+            'mu': self.get_contact_mu()
         }
         file_path = Path(output_folder / f"{n_cloth}_{axis}_{np.rad2deg(angle):.0f}.npy")
         np.save(file_path, contact_df)
