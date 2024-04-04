@@ -44,6 +44,46 @@ n_bodies_to_vertices = {
 }
 
 
+# Adapted from dex-net https://github.com/BerkeleyAutomation/dex-net
+def normal_force_magnitude(constraint_force, normal):
+    in_direction_norm = constraint_force / np.linalg.norm(constraint_force)
+    normal_force_mag = np.dot(in_direction_norm, normal)
+    return max(normal_force_mag, 0.0)
+
+
+def is_slipping(constraint_force, in_normal, t1, t2, mu):
+    in_direction_norm = constraint_force / np.linalg.norm(constraint_force)
+    normal_force_mag = normal_force_magnitude(constraint_force, in_normal)
+    tan_force_x = np.dot(in_direction_norm, t1)
+    tan_force_y = np.dot(in_direction_norm, t2)
+    tan_force_mag = np.sqrt(tan_force_x ** 2 + tan_force_y ** 2)
+    friction_force_mag = mu * normal_force_mag
+
+    return friction_force_mag < tan_force_mag
+
+
+# Adapted from dex-net https://github.com/BerkeleyAutomation/dex-net
+
+def friction_cone(frame, constraint_force, logging, num_cone_faces=8, mu=0.5):
+    # get normal and tangents
+    in_normal, t1, t2 = -frame[0:3], frame[3:6], frame[6:]
+
+    if is_slipping(constraint_force, in_normal, t1, t2, mu):
+        logging.debug('Contact would slip')
+
+    # set up friction cone
+    force = in_normal
+    cone_support = np.zeros((3, num_cone_faces))
+
+    # find convex combinations of tangent vectors
+    for j in range(num_cone_faces):
+        tan_vec = t1 * np.cos(2 * np.pi * (float(j) / num_cone_faces)) + t2 * np.sin(
+            2 * np.pi * (float(j) / num_cone_faces))
+        cone_support[:, j] = force + mu * tan_vec
+
+    return cone_support
+
+
 class UnfoldCloth(SingleArmEnv):
     """
     Copied and modified from Lift environment, so check that for all the documentation of parameters.
@@ -378,25 +418,48 @@ class UnfoldCloth(SingleArmEnv):
         # All the contacts have the same dimension
         return self.sim.data.contact.dim[contact_points][0] if contact_points[0].size > 0 else -1
 
-    def calculate_wrench_space(self):
+    def contact_frame(self, point_idx):
+        return self.sim.data.contact.frame[point_idx]
+
+    def contact_force_in_world_coordinates(self, point_idx, contact_force):
+        contact_frame = self.contact_frame(point_idx).reshape(3, 3).T
+        contact_force_copy = contact_force.copy()
+        force_in_wc = np.matmul(contact_frame, contact_force_copy[:3])
+        torque_in_wc = np.matmul(contact_frame, contact_force_copy[3:])
+        return np.vstack((force_in_wc, torque_in_wc))
+
+    def calculate_wrench_space(self, num_cone_faces=6):
         contact_points_idxs = np.append(self.get_contact_point_idxs(1), self.get_contact_point_idxs(2))
-        contact_wrenches = np.zeros(shape=(6, len(contact_points_idxs)))
+        contact_wrenches = np.zeros(shape=(6, len(contact_points_idxs) * num_cone_faces))
+        start_index = 0
         for i, point_idx in enumerate(contact_points_idxs):
             contact_force = np.zeros(shape=(6, 1), dtype=np.float64)
             mj_contactForce(self.sim.model._model, self.sim.data._data, point_idx, contact_force)
-
-            contact_frame = self.sim.data.contact.frame[point_idx].reshape(3, 3).T
-            contact_force_copy = contact_force.copy()
-            force_in_wc = np.matmul(contact_frame, contact_force_copy[:3])
-            torque_in_wc = np.matmul(contact_frame, contact_force_copy[3:])
-            contact_force_in_wc = np.vstack((force_in_wc, torque_in_wc))
-
-            contact_wrenches[:, i] = contact_force_in_wc.T
-            self.logger.debug(f"idx {point_idx} - {[f'{el:.2f}' for el in contact_force_in_wc.T.tolist()[0]]}")
-
-            # contact_wrenches[:, i] = contact_force.copy().T
+            contact_force_in_wc = self.contact_force_in_world_coordinates(point_idx, contact_force)
+            contact_frame = self.contact_frame(point_idx)
+            cone_support = friction_cone(contact_frame, contact_force_in_wc[:3, 0],
+                                            mu=self.sim.data.contact[point_idx].mu,
+                                            num_cone_faces=num_cone_faces, logging=self.logger)
+            contact_point = self.sim.data.contact[point_idx].pos
+            torques = self.torques_of_friction_cone(cone_support, contact_point)
+            contact_wrenches[:3, start_index:start_index + num_cone_faces] = cone_support
+            contact_wrenches[3:, start_index:start_index + num_cone_faces] = torques
+            start_index += num_cone_faces
 
         return contact_wrenches
+
+    def torques_of_friction_cone(self, cone, contact_point):
+        num_forces = cone.shape[1]
+        torques = np.zeros(shape=(3, num_forces))
+        for i in range(num_forces):
+            if self.cloth_sim:
+                moment_arm = contact_point - self.cloth_body_pos
+            if self.cube_sim:
+                moment_arm = contact_point - self.sim.data.body_xpos[self.cube_body_id]
+
+            torques[:, i] = np.cross(moment_arm, cone[:, i])
+
+        return torques
 
     def get_contact_frames(self):
         contact_points_idxs = np.append(self.get_contact_point_idxs(1), self.get_contact_point_idxs(2))
