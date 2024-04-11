@@ -734,7 +734,7 @@
 		</flex>
 	</deformable>
 	<equality>
-		<flex flex="cloth"></flex>
-<!--		<flex flex="cloth_cloth"></flex>-->
+<!--		<flex flex="cloth"></flex>-->
+		<flex flex="cloth_cloth"></flex>
 	</equality>
 </mujoco>
